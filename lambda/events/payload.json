@@ -1,0 +1,133 @@
+{
+    "id": 100000002,
+    "project": {
+        "id": 100000,
+        "projectKey": "SAMPLE_PROJECT",
+        "name": "Sample Project",
+        "chartEnabled": true,
+        "subtaskingEnabled": true,
+        "projectLeaderCanEditProjectLeader": true,
+        "useWikiTreeView": true,
+        "textFormattingRule": "markdown",
+        "archived": false
+    },
+    "type": 2,
+    "content": {
+        "id": 200000002,
+        "key_id": 200,
+        "summary": "Code Review for Backend - Sample task",
+        "description": "Pull Request Link:\nhttps://github.com/example-org/example-repo/pull/123\n\n **Review Checklist:** \n\n1. Code Quality:\n\n* [x] Code follows the established coding conventions and style guidelines.\n* [x] Meaningful variable and function names have been used.\n* [ ] Avoided unnecessary or redundant code.\n\n2. Functionality:\n\n* [ ] Implemented feature/task functions as described in the requirements.\n* [ ] Edge cases and error scenarios have been handled appropriately.\n\n3. Performance:\n\n* [ ] Code optimizations have been considered where necessary.\n* [ ] Avoided unnecessary database or API calls.\n\n4. Testing:\n\n* [ ] Unit tests have been written and cover critical functionality.\n* [ ] Integration tests cover interactions with other components if applicable.\n* [ ] All existing tests are passing.\n\n5. Documentation:\n\n* [ ] Updated relevant documentation, including API endpoints, if applicable.\n* [ ] Added inline comments where necessary for better code understanding.\n\n6. Security:\n\n* [ ] Sanitized inputs and avoided SQL injection vulnerabilities.\n* [ ] Ensured that sensitive data is handled securely, following our security guidelines.\n\n7. Review Comments:\n\n* [ ] Reviewed and addressed comments/suggestions made by reviewers.",
+        "issueType": {
+            "id": 100005,
+            "projectId": 100000,
+            "name": "Review",
+            "color": "#7ea800",
+            "displayOrder": 4
+        },
+        "resolution": null,
+        "priority": {
+            "id": 3,
+            "name": "中"
+        },
+        "status": {
+            "id": 2,
+            "name": "処理中"
+        },
+        "assignee": {
+            "id": 100006,
+            "userId": "hanako.suzuki",
+            "name": "Hanako Suzuki",
+            "roleType": 94,
+            "lang": "en"
+        },
+        "category": [
+            {
+                "id": 100007,
+                "name": "Sample Category",
+                "displayOrder": 1
+            }
+        ],
+        "versions": [
+            {
+                "id": 100008,
+                "projectId": 100000,
+                "name": "S01(20230101-20230107)",
+                "description": null,
+                "startDate": "2023-01-01",
+                "releaseDueDate": "2023-01-07",
+                "archived": false,
+                "displayOrder": 1
+            }
+        ],
+        "milestone": [
+            {
+                "id": 100008,
+                "projectId": 100000,
+                "name": "S01(20230101-20230107)",
+                "description": null,
+                "startDate": "2023-01-01",
+                "releaseDueDate": "2023-01-07",
+                "archived": false,
+                "displayOrder": 1
+            }
+        ],
+        "startDate": "2023-01-03",
+        "dueDate": "2023-01-07",
+        "estimatedHours": 1,
+        "actualHours": null,
+        "parentIssueId": 200000000,
+        "customFields": [
+            {
+                "id": 100009,
+                "fieldTypeId": 6,
+                "field": "Story point",
+                "value": [
+                    {
+                        "id": 3,
+                        "name": "3",
+                        "displayOrder": 2
+                    }
+                ]
+            },
+            {
+                "id": 100010,
+                "fieldTypeId": 6,
+                "field": "Project",
+                "value": [
+                    {
+                        "id": 8,
+                        "name": "Sample",
+                        "displayOrder": 7
+                    }
+                ]
+            }
+        ],
+        "attachments": [],
+        "shared_files": [],
+        "externalFileLinks": [],
+        "diff": null,
+        "comment": {
+            "id": 300000002,
+            "content": ""
+        },
+        "changes": [
+            {
+                "field": "status",
+                "new_value": "2",
+                "old_value": "1",
+                "type": "standard"
+            }
+        ]
+    },
+    "notifications": [],
+    "createdUser": {
+        "id": 100011,
+        "userId": null,
+        "name": "Jiro Tanaka",
+        "roleType": 2,
+        "lang": null,
+        "mailAddress": null,
+        "nulabAccount": null
+    },
+    "created": "2023-01-03T00:00:00Z"
+}
