@@ -1,0 +1,133 @@
+{
+    "id": 291425786,
+    "project": {
+        "id": 161387,
+        "projectKey": "MIERUCA_SEO_HEATMAP",
+        "name": "MIERUCA SEO / HEATMAP",
+        "chartEnabled": true,
+        "subtaskingEnabled": true,
+        "projectLeaderCanEditProjectLeader": true,
+        "useWikiTreeView": true,
+        "textFormattingRule": "markdown",
+        "archived": false
+    },
+    "type": 2,
+    "content": {
+        "id": 40065687,
+        "key_id": 1136,
+        "summary": "Code Review for BackEnd - Improve speed of Suggest keywords",
+        "description": "Pull Request Link:\nhttps://github.com/FaberTechnology/faber-extract/pull/12243\n\n **Review Checklist:** \n\n1. Code Quality:\n\n* [x] Code follows the established coding conventions and style guidelines.\n* [x] Meaningful variable and function names have been used.\n* [ ] Avoided unnecessary or redundant code.\n\n2. Functionality:\n\n* [ ] Implemented feature/task functions as described in the requirements.\n* [ ] Edge cases and error scenarios have been handled appropriately.\n\n3. Performance:\n\n* [ ] Code optimizations have been considered where necessary.\n* [ ] Avoided unnecessary database or API calls.\n\n4. Testing:\n\n* [ ] Unit tests have been written and cover critical functionality.\n* [ ] Integration tests cover interactions with other components if applicable.\n* [ ] All existing tests are passing.\n\n5. Documentation:\n\n* [ ] Updated relevant documentation, including API endpoints, if applicable.\n* [ ] Added inline comments where necessary for better code understanding.\n\n6. Security:\n\n* [ ] Sanitized inputs and avoided SQL injection vulnerabilities.\n* [ ] Ensured that sensitive data is handled securely, following our security guidelines.\n\n7. Review Comments:\n\n* [ ] Reviewed and addressed comments/suggestions made by reviewers.",
+        "issueType": {
+            "id": 817951,
+            "projectId": 161387,
+            "name": "Review",
+            "color": "#7ea800",
+            "displayOrder": 4
+        },
+        "resolution": null,
+        "priority": {
+            "id": 3,
+            "name": "中"
+        },
+        "status": {
+            "id": 2,
+            "name": "処理中"
+        },
+        "assignee": {
+            "id": 399389,
+            "userId": "NguyenNgocHoang",
+            "name": "HoangHades",
+            "roleType": 94,
+            "lang": "en"
+        },
+        "category": [
+            {
+                "id": 473593,
+                "name": "MIERUCA SEO",
+                "displayOrder": 1
+            }
+        ],
+        "versions": [
+            {
+                "id": 415669,
+                "projectId": 161387,
+                "name": "S10(20231205-20231211)",
+                "description": null,
+                "startDate": "2023-12-05",
+                "releaseDueDate": "2023-12-11",
+                "archived": false,
+                "displayOrder": 1
+            }
+        ],
+        "milestone": [
+            {
+                "id": 415669,
+                "projectId": 161387,
+                "name": "S10(20231205-20231211)",
+                "description": null,
+                "startDate": "2023-12-05",
+                "releaseDueDate": "2023-12-11",
+                "archived": false,
+                "displayOrder": 1
+            }
+        ],
+        "startDate": "2023-12-07",
+        "dueDate": "2023-12-11",
+        "estimatedHours": 1,
+        "actualHours": null,
+        "parentIssueId": 40020056,
+        "customFields": [
+            {
+                "id": 99643,
+                "fieldTypeId": 6,
+                "field": "Story point",
+                "value": [
+                    {
+                        "id": 3,
+                        "name": "3",
+                        "displayOrder": 2
+                    }
+                ]
+            },
+            {
+                "id": 99807,
+                "fieldTypeId": 6,
+                "field": "Project",
+                "value": [
+                    {
+                        "id": 8,
+                        "name": "Mieruca",
+                        "displayOrder": 7
+                    }
+                ]
+            }
+        ],
+        "attachments": [],
+        "shared_files": [],
+        "externalFileLinks": [],
+        "diff": null,
+        "comment": {
+            "id": 225813493,
+            "content": ""
+        },
+        "changes": [
+            {
+                "field": "status",
+                "new_value": "2",
+                "old_value": "1",
+                "type": "standard"
+            }
+        ]
+    },
+    "notifications": [],
+    "createdUser": {
+        "id": 542395,
+        "userId": null,
+        "name": "Phan Hoang Tri",
+        "roleType": 2,
+        "lang": null,
+        "mailAddress": null,
+        "nulabAccount": null
+    },
+    "created": "2023-12-07T04:45:59Z"
+}

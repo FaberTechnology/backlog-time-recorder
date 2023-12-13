@@ -1,10 +1,19 @@
 package com.myorg;
 
-import software.constructs.Construct;
+import java.util.HashMap;
+import java.util.Map;
+
+import software.amazon.awscdk.Duration;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
-// import software.amazon.awscdk.Duration;
-// import software.amazon.awscdk.services.sqs.Queue;
+import software.amazon.awscdk.services.lambda.Code;
+import software.amazon.awscdk.services.lambda.Function;
+import software.amazon.awscdk.services.lambda.FunctionUrlAuthType;
+import software.amazon.awscdk.services.lambda.FunctionUrlOptions;
+import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.lambda.SnapStartConf;
+import software.amazon.awscdk.services.logs.RetentionDays;
+import software.constructs.Construct;
 
 public class BacklogTimeRecorderStack extends Stack {
     public BacklogTimeRecorderStack(final Construct scope, final String id) {
@@ -14,11 +23,24 @@ public class BacklogTimeRecorderStack extends Stack {
     public BacklogTimeRecorderStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        // The code that defines your stack goes here
+        final Map<String, String> env = new HashMap<>() {
+            {
+                put("BACKLOG_API_KEY", System.getenv("BACKLOG_API_KEY"));
+            }
+        };
 
-        // example resource
-        // final Queue queue = Queue.Builder.create(this, "BacklogTimeRecorderQueue")
-        //         .visibilityTimeout(Duration.seconds(300))
-        //         .build();
+        final Function backlogTimeRecorder = Function.Builder.create(this, "BacklogTimeRecorder")
+                .runtime(Runtime.JAVA_17)
+                .code(Code.fromAsset("lambda/target/backlog-time-recorder-0.1.jar"))
+                .handler("com.lambda.BacklogTimeRecorder::handleRequest")
+                .environment(env)
+                .timeout(Duration.seconds(30))
+                .logRetention(RetentionDays.ONE_MONTH)
+                .snapStart(SnapStartConf.ON_PUBLISHED_VERSIONS)
+                .build();
+        backlogTimeRecorder
+                .addFunctionUrl(FunctionUrlOptions.builder()
+                        .authType(FunctionUrlAuthType.NONE)
+                        .build());
     }
 }

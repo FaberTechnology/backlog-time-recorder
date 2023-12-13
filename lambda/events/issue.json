@@ -1,0 +1,47 @@
+{
+    "version": "2.0",
+    "routeKey": "ANY /nodejs-apig-function-1G3XMPLZXVXYI",
+    "rawPath": "/default/nodejs-apig-function-1G3XMPLZXVXYI",
+    "rawQueryString": "",
+    "cookies": [
+        "s_fid=7AABXMPL1AFD9BBF-0643XMPL09956DE2",
+        "regStatus=pre-register"
+    ],
+    "headers": {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "content-length": "0",
+        "host": "r3pmxmplak.execute-api.us-east-2.amazonaws.com",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "cross-site",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+        "x-amzn-trace-id": "Root=1-5e6722a7-cc56xmpl46db7ae02d4da47e",
+        "x-forwarded-for": "205.255.255.176",
+        "x-forwarded-port": "443",
+        "x-forwarded-proto": "https"
+    },
+    "requestContext": {
+        "accountId": "123456789012",
+        "apiId": "r3pmxmplak",
+        "domainName": "r3pmxmplak.execute-api.us-east-2.amazonaws.com",
+        "domainPrefix": "r3pmxmplak",
+        "http": {
+            "method": "GET",
+            "path": "/default/nodejs-apig-function-1G3XMPLZXVXYI",
+            "protocol": "HTTP/1.1",
+            "sourceIp": "205.255.255.176",
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
+        },
+        "requestId": "JKJaXmPLvHcESHA=",
+        "routeKey": "ANY /nodejs-apig-function-1G3XMPLZXVXYI",
+        "stage": "default",
+        "time": "10/Mar/2020:05:16:23 +0000",
+        "timeEpoch": 1583817383220
+    },
+    "body": "{\"id\":291417804,\"project\":{\"id\":161387,\"projectKey\":\"MIERUCA_SEO_HEATMAP\",\"name\":\"MIERUCA SEO / HEATMAP\",\"chartEnabled\":true,\"subtaskingEnabled\":true,\"projectLeaderCanEditProjectLeader\":true,\"useWikiTreeView\":true,\"textFormattingRule\":\"markdown\",\"archived\":false},\"type\":2,\"content\":{\"id\":39751072,\"key_id\":809,\"summary\":\"Why system fails the research keyword `30代 化粧品` and URL `https://customlife-media.jp/thirties-cosmetics` on `/rewrite-topic-research`\",\"description\":\".\",\"issueType\":{\"id\":812040,\"projectId\":161387,\"name\":\"Research\",\"color\":\"#990000\",\"displayOrder\":1},\"resolution\":null,\"priority\":{\"id\":3,\"name\":\"中\"},\"status\":{\"id\":4,\"name\":\"完了\"},\"assignee\":{\"id\":542284,\"userId\":\"masayuki.sugahara\",\"name\":\"Masayuki Sugahara\",\"roleType\":94,\"lang\":\"en\"},\"category\":[],\"versions\":[],\"milestone\":[{\"id\":414491,\"projectId\":161387,\"name\":\"S07(20231114-20231120)\",\"description\":null,\"startDate\":\"2023-11-14\",\"releaseDueDate\":\"2023-11-20\",\"archived\":false,\"displayOrder\":5}],\"startDate\":\"2023-11-16\",\"dueDate\":\"2023-11-20\",\"estimatedHours\":null,\"actualHours\":null,\"parentIssueId\":null,\"customFields\":[{\"id\":99807,\"fieldTypeId\":6,\"field\":\"Project\",\"value\":[{\"id\":17,\"name\":\"CS Request\",\"displayOrder\":15},{\"id\":31,\"name\":\"Rewrite Topic Research\",\"displayOrder\":28}]}],\"attachments\":[],\"shared_files\":[],\"externalFileLinks\":[],\"diff\":null,\"comment\":{\"id\":225806837,\"content\":\"\"},\"changes\":[{\"field\":\"status\",\"new_value\":\"3\",\"old_value\":\"2\",\"type\":\"standard\"}]},\"notifications\":[],\"createdUser\":{\"id\":542284,\"userId\":null,\"name\":\"Masayuki Sugahara\",\"roleType\":2,\"lang\":\"en\",\"mailAddress\":null,\"nulabAccount\":{\"nulabId\":\"R2OhM053mF1T8m5lzPyXW3J4xh6Siovhe4CAro6hP7NFtJpIPV\",\"name\":\"菅原 政行\",\"uniqueId\":\"masayukisugahara\"}},\"created\":\"2023-12-07T04:08:21Z\"}",
+    "isBase64Encoded": false
+}
