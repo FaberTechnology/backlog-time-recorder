@@ -64,11 +64,8 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
     }
 
     private APIGatewayV2HTTPResponse returnText(String text, int status) {
-        final HashMap<String, String> headers = new HashMap<>() {
-            {
-                put("Content-Type", "text/plain");
-            }
-        };
+        final HashMap<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "text/plain");
         final APIGatewayV2HTTPResponse response = new APIGatewayV2HTTPResponse();
 
         response.setBody(text);
