@@ -33,7 +33,7 @@ public class BacklogTimeRecorderApp {
                                 // For more information, see
                                 // https://docs.aws.amazon.com/cdk/latest/guide/environments.html
                                 // .synthesizer(DefaultStackSynthesizer.Builder.create().fileAssetsBucketName(
-                                //                 app.getNode().tryGetContext("fileAssetsBucketName").toString()).build())
+                                // app.getNode().tryGetContext("fileAssetsBucketName").toString()).build())
                                 .build());
 
                 app.synth();
