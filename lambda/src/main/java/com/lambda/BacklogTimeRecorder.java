@@ -25,25 +25,42 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         }
         logger.log(body, LogLevel.DEBUG);
 
-        WebhookPayload payload = Jackson.fromJsonString(body, WebhookPayload.class);
-        Issue issue = payload.content;
+        final WebhookPayload payload = Jackson.fromJsonString(body, WebhookPayload.class);
+        final Issue issue = payload.content;
 
         if (issue == null) {
             return returnText("Issue is null", 204);
         }
 
-        if (issue.getStatus().getStatusType() != StatusType.Closed) {
-            return returnText("Issue is not closed", 204);
+        final StatusType statusType = issue.getStatus().getStatusType();
+        if (!(statusType == StatusType.Closed || statusType == StatusType.InProgress)) {
+            return returnText("Issue is not closed or in progress", 204);
         }
 
+        final String apiKey = System.getenv("BACKLOG_API_KEY");
+        if (apiKey == null) {
+            throw new RuntimeException("BACKLOG_API_KEY is not set");
+        }
+        final IssueUpdater updater = new IssueUpdater(apiKey);
+
         for (var change : issue.getChanges()) {
-            if (!change.getField().equals("status")
-                    || Integer.parseInt(change.getNewValue()) != StatusType.Closed.getIntValue())
+            if (!change.getField().equals("status"))
                 continue;
 
-            com.nulabinc.backlog4j.Issue updatedIssue = updateIssue(issue);
-            logger.log(updatedIssue.getIssueKey());
-            if (updatedIssue != null && updatedIssue.getActualHours() != null) {
+            int newStatus = Integer.parseInt(change.getNewValue());
+
+            com.nulabinc.backlog4j.Issue updatedIssue = null;
+            if (newStatus == StatusType.Closed.getIntValue())
+                updatedIssue = updater.setActualHours(issue.getId());
+
+            if (newStatus == StatusType.InProgress.getIntValue())
+                updatedIssue = updater.setStartedAt(issue.getId());
+
+            if (updatedIssue == null) {
+                return returnText("no issue to Update", 200);
+            }
+
+            if (updatedIssue.getActualHours() != null) {
                 return returnText("Updated", 200);
             } else {
                 return returnText("Failed to update", 500);
@@ -51,16 +68,6 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         }
 
         return returnText(issue.getSummary(), 202);
-    }
-
-    private com.nulabinc.backlog4j.Issue updateIssue(Issue issue) {
-        final String apiKey = System.getenv("BACKLOG_API_KEY");
-        if (apiKey == null) {
-            throw new RuntimeException("BACKLOG_API_KEY is not set");
-        }
-        final IssueUpdater updater = new IssueUpdater(apiKey);
-
-        return updater.setRealHours(issue.getId());
     }
 
     private APIGatewayV2HTTPResponse returnText(String text, int status) {
