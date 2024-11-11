@@ -22,6 +22,8 @@ public class IssueUpdater {
 
     static private final String CUSTOM_FIELD_STARTED_AT = "Started at";
     private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
+    private static final List<DayOfWeek> WEEKENDS = Arrays.asList(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+
 
     public IssueUpdater(final String apiKey) {
         configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
@@ -72,8 +74,7 @@ public class IssueUpdater {
         Duration totalWorkingDuration = Duration.ZERO;
 
         while (current.isBefore(end)) {
-            // Only count weekdays
-            if (current.getDayOfWeek() != DayOfWeek.SATURDAY && current.getDayOfWeek() != DayOfWeek.SUNDAY) {
+            if (isWeekday(current)) {
                 LocalDateTime endOfDay = current.withHour(19).withMinute(30); // End at 17:30 ITC as 19:30 JST
                 
                 // Add hours for current day or until end time
@@ -86,6 +87,10 @@ public class IssueUpdater {
         }
 
         return totalWorkingDuration;
+    }
+
+    private boolean isWeekday(LocalDateTime dateTime) {
+        return !WEEKENDS.contains(dateTime.getDayOfWeek());
     }
 
     private boolean isSameDate(LocalDateTime dateTime1, LocalDateTime dateTime2) {
