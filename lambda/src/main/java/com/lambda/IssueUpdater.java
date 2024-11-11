@@ -72,7 +72,7 @@ public class IssueUpdater {
         if (!field.isPresent())
             return null;
 
-        String startedAt = LocalDateTime.now().toString();
+        String startedAt = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toString();
         return client.updateIssue(new UpdateIssueParams(issue.getId()).textCustomField(field.get().getId(), startedAt));
     }
 }
