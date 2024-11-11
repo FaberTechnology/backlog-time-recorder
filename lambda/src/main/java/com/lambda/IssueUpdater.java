@@ -57,7 +57,7 @@ public class IssueUpdater {
                     LocalDateTime.now());
         }
         DecimalFormat df = new DecimalFormat("0.0");
-        float actualHours = Float.parseFloat((df.format(elapsed.toMinutes() / 60)));
+        float actualHours = Float.parseFloat((df.format(elapsed.toMinutes() / 60.0)));
 
         if (actualHours > 999 || actualHours < 0)
             return null;
