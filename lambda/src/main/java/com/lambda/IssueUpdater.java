@@ -21,6 +21,7 @@ public class IssueUpdater {
     private BacklogClient client;
 
     static private final String CUSTOM_FIELD_STARTED_AT = "Started at";
+    private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
 
     public IssueUpdater(final String apiKey) {
         configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
@@ -44,7 +45,7 @@ public class IssueUpdater {
             if (startedAtValue != null && !startedAtValue.isBlank()) {
                 // get elapsed time from the started time in hours
                 try {
-                    LocalDateTime endAt = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo"));
+                    LocalDateTime endAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE);
                     elapsed = calculateWorkingHours(LocalDateTime.parse(startedAtValue), endAt);
                 } catch (DateTimeParseException ex) {
                 }
@@ -98,7 +99,7 @@ public class IssueUpdater {
         if (!field.isPresent())
             return null;
 
-        String startedAt = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo")).toString();
+        String startedAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
         return client.updateIssue(new UpdateIssueParams(issue.getId()).textCustomField(field.get().getId(), startedAt));
     }
 }
