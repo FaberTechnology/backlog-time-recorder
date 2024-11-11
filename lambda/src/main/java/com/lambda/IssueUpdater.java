@@ -44,7 +44,8 @@ public class IssueUpdater {
             if (startedAtValue != null && !startedAtValue.isBlank()) {
                 // get elapsed time from the started time in hours
                 try {
-                    elapsed = Duration.between(LocalDateTime.parse(startedAtValue), LocalDateTime.now());
+                    LocalDateTime endAt = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Tokyo"));
+                    elapsed = calculateWorkingHours(LocalDateTime.parse(startedAtValue), endAt);
                 } catch (DateTimeParseException ex) {
                 }
             }
@@ -63,6 +64,31 @@ public class IssueUpdater {
             return null;
 
         return client.updateIssue(new UpdateIssueParams(issue.getId()).actualHours(actualHours));
+    }
+
+    private Duration calculateWorkingHours(LocalDateTime start, LocalDateTime end) {
+        LocalDateTime current = start;
+        Duration totalWorkingDuration = Duration.ZERO;
+
+        while (current.isBefore(end)) {
+            // Only count weekdays
+            if (current.getDayOfWeek() != DayOfWeek.SATURDAY && current.getDayOfWeek() != DayOfWeek.SUNDAY) {
+                LocalDateTime endOfDay = current.withHour(19).withMinute(30); // End at 17:30 ITC as 19:30 JST
+                
+                // Add hours for current day or until end time
+                LocalDateTime actualEnd = isSameDate(end, endOfDay) ? end : endOfDay;
+                totalWorkingDuration = totalWorkingDuration.plus(Duration.between(current, actualEnd));
+            }
+
+            // Move to the next day at 09:30 JST
+            current = current.plusDays(1).withHour(9).withMinute(30);
+        }
+
+        return totalWorkingDuration;
+    }
+
+    private boolean isSameDate(LocalDateTime dateTime1, LocalDateTime dateTime2) {
+        return dateTime1.toLocalDate().equals(dateTime2.toLocalDate());
     }
 
     public Issue setStartedAt(final int issueId) {
