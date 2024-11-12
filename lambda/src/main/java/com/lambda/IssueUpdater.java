@@ -76,7 +76,7 @@ public class IssueUpdater {
         return client.updateIssue(new UpdateIssueParams(issue.getId()).actualHours(actualHours));
     }
 
-    private Duration calculateWorkingHours(LocalDateTime start, LocalDateTime end) {
+    private Duration calculateWorkingHours(final LocalDateTime start, final LocalDateTime end) {
         LocalDateTime current = start;
         Duration totalWorkingDuration = Duration.ZERO;
 
@@ -96,11 +96,11 @@ public class IssueUpdater {
         return totalWorkingDuration;
     }
 
-    private boolean isWeekday(LocalDateTime dateTime) {
+    private boolean isWeekday(final LocalDateTime dateTime) {
         return !WEEKENDS.contains(dateTime.getDayOfWeek());
     }
 
-    private boolean isSameDate(LocalDateTime dateTime1, LocalDateTime dateTime2) {
+    private boolean isSameDate(final LocalDateTime dateTime1, final LocalDateTime dateTime2) {
         return dateTime1.toLocalDate().equals(dateTime2.toLocalDate());
     }
 
