@@ -79,7 +79,7 @@ public class IssueUpdater {
 
         while (current.isBefore(end)) {
             if (isWeekday(current)) {
-                LocalDateTime endOfDay = current.withHour(19).withMinute(30); // End at 17:30 ITC as 19:30 JST
+                LocalDateTime endOfDay = current.withHour(19).withMinute(30); // End at 17:30 ICT as 19:30 JST
                 
                 // Add hours for current day or until end time
                 LocalDateTime actualEnd = isSameDate(end, endOfDay) ? end : endOfDay;
