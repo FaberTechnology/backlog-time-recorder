@@ -5,6 +5,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -27,6 +28,8 @@ public class IssueUpdater {
     private static final String CUSTOM_FIELD_STARTED_AT = "Started at";
     private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
     private static final List<DayOfWeek> WEEKENDS = Arrays.asList(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+    private static final LocalTime WORK_START_TIME = LocalTime.of(9, 30); // Start at 09:30 JST
+    private static final LocalTime WORK_END_TIME = LocalTime.of(19, 30); // End at 17:30 ICT as 19:30 JST
 
 
     public IssueUpdater(final String apiKey) {
@@ -79,15 +82,15 @@ public class IssueUpdater {
 
         while (current.isBefore(end)) {
             if (isWeekday(current)) {
-                LocalDateTime endOfDay = current.withHour(19).withMinute(30); // End at 17:30 ICT as 19:30 JST
+                LocalDateTime endOfDay = current.toLocalDate().atTime(WORK_END_TIME); 
                 
                 // Add hours for current day or until end time
                 LocalDateTime actualEnd = isSameDate(end, endOfDay) ? end : endOfDay;
                 totalWorkingDuration = totalWorkingDuration.plus(Duration.between(current, actualEnd));
             }
 
-            // Move to the next day at 09:30 JST
-            current = current.plusDays(1).withHour(9).withMinute(30);
+            // Move to the next day
+            current = current.plusDays(1).toLocalDate().atTime(WORK_START_TIME);
         }
 
         return totalWorkingDuration;
