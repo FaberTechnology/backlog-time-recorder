@@ -24,7 +24,7 @@ public class IssueUpdater {
     private BacklogConfigure configure;
     private BacklogClient client;
 
-    static private final String CUSTOM_FIELD_STARTED_AT = "Started at";
+    private static final String CUSTOM_FIELD_STARTED_AT = "Started at";
     private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
     private static final List<DayOfWeek> WEEKENDS = Arrays.asList(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
