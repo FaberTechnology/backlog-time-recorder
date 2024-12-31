@@ -46,7 +46,7 @@ public class IssueUpdater {
             final String startedAtValue = ((TextCustomField) startedAt.get()).getValue();
 
             if (startedAtValue != null && !startedAtValue.isBlank()) {
-                elapsed = extracted(elapsed, startedAtValue);
+                elapsed = extracted(startedAtValue);
             }
         }
 
@@ -65,8 +65,9 @@ public class IssueUpdater {
         return client.updateIssue(new UpdateIssueParams(issue.getId()).actualHours(actualHours));
     }
 
-    private Duration extracted(Duration elapsed, final String startedAtValue) {
+    private Duration extracted(final String startedAtValue) {
         // get elapsed time from the started time in hours
+        Duration elapsed = Duration.ZERO;
         try {
             final String[] startAtArray = startedAtValue.split(";");
             startAtArray[startAtArray.length - 1] = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
