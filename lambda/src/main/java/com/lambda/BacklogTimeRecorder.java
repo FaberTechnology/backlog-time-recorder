@@ -32,11 +32,6 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("Issue is null", 204);
         }
 
-        final StatusType statusType = issue.getStatus().getStatusType();
-        if (!(statusType == StatusType.Closed || statusType == StatusType.InProgress)) {
-            return returnText("Issue is not closed or in progress", 204);
-        }
-
         final String apiKey = System.getenv("BACKLOG_API_KEY");
         if (apiKey == null) {
             throw new RuntimeException("BACKLOG_API_KEY is not set");
@@ -54,15 +49,15 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
 
         com.nulabinc.backlog4j.Issue updatedIssue = null;
         switch (StatusType.valueOf(newStatus)) {
-            case Closed:
-                updatedIssue = updater.setActualHours(issue.getId());
-                break;
-            case InProgress:
-                updatedIssue = updater.setStartedAt(issue.getId());
-                break;
-            default:
-                return returnText("Unhandled status change", 204);
-        }
+        case Closed:
+            updatedIssue = updater.setActualHours(issue.getId());
+            break;
+        case InProgress, Open:
+            updatedIssue = updater.setStartedAt(issue.getId());
+            break;
+        default:
+            return returnText("Unhandled status change", 204);
+            }
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);
