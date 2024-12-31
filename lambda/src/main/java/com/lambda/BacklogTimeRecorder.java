@@ -49,15 +49,15 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
 
         com.nulabinc.backlog4j.Issue updatedIssue = null;
         switch (StatusType.valueOf(newStatus)) {
-        case Closed:
-            updatedIssue = updater.setActualHours(issue.getId());
-            break;
-        case InProgress, Open:
-            updatedIssue = updater.setStartedAt(issue.getId());
-            break;
-        default:
-            return returnText("Unhandled status change", 204);
-            }
+            case Closed:
+                updatedIssue = updater.setActualHours(issue.getId());
+                break;
+            case InProgress, Open:
+                updatedIssue = updater.setStartedAt(issue.getId());
+                break;
+            default:
+                return returnText("Unhandled status change", 204);
+        }
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);
