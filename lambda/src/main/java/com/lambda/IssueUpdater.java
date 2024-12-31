@@ -46,12 +46,7 @@ public class IssueUpdater {
             final String startedAtValue = ((TextCustomField) startedAt.get()).getValue();
 
             if (startedAtValue != null && !startedAtValue.isBlank()) {
-                // get elapsed time from the started time in hours
-                try {
-                    LocalDateTime endAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE);
-                    elapsed = new WorkdayUtils().calculateWorkingHours(LocalDateTime.parse(startedAtValue), endAt);
-                } catch (DateTimeParseException ex) {
-                }
+                elapsed = extracted(elapsed, startedAtValue);
             }
         }
 
@@ -68,6 +63,22 @@ public class IssueUpdater {
             return null;
 
         return client.updateIssue(new UpdateIssueParams(issue.getId()).actualHours(actualHours));
+    }
+
+    private Duration extracted(Duration elapsed, final String startedAtValue) {
+        // get elapsed time from the started time in hours
+        try {
+            final String[] startAtArray = startedAtValue.split(";");
+            startAtArray[startAtArray.length - 1] = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
+            for (int i = 0; i < startAtArray.length - 1; i+=2) {
+                LocalDateTime startAt = LocalDateTime.parse(startAtArray[i]);
+                LocalDateTime endAt = LocalDateTime.parse(startAtArray[i + 1]);
+                elapsed = elapsed.plus(new WorkdayUtils().calculateWorkingHours(startAt, endAt));
+            }
+            elapsed = new WorkdayUtils().calculateWorkingHours(LocalDateTime.parse(startedAtValue), endAt);
+        } catch (DateTimeParseException ex) {
+        }
+        return elapsed;
     }
 
     public Issue setStartedAt(final int issueId) {
