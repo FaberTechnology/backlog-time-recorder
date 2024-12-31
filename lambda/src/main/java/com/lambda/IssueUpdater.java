@@ -76,7 +76,6 @@ public class IssueUpdater {
                 LocalDateTime endAt = LocalDateTime.parse(startAtArray[i + 1]);
                 elapsed = elapsed.plus(new WorkdayUtils().calculateWorkingHours(startAt, endAt));
             }
-            elapsed = new WorkdayUtils().calculateWorkingHours(LocalDateTime.parse(startedAtValue), endAt);
         } catch (DateTimeParseException ex) {
         }
         return elapsed;
