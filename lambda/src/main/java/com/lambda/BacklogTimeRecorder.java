@@ -36,8 +36,8 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             .filter(change -> change.getField().equals("status"))
             .findFirst()
             .map(change -> Integer.parseInt(change.getNewValue()))
-            .orElse(-1);
-        if (newStatus == -1) {
+            .orElse(0);
+        if (newStatus == 0) {
             return returnText("Status did not change", 204);
         }
 
