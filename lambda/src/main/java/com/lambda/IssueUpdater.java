@@ -78,6 +78,10 @@ public class IssueUpdater {
             return null;
 
         String startedAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
+        final String startedAtValue = ((TextCustomField) startedAt.get()).getValue();
+        if (startedAtValue != null && !startedAtValue.isBlank()) {
+            startedAt = startedAtValue + ";" + startedAt;
+        }
         return client.updateIssue(new UpdateIssueParams(issue.getId()).textCustomField(field.get().getId(), startedAt));
     }
 }
