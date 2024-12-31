@@ -68,12 +68,6 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("No issue to update", 200);
         }
 
-        if (updatedIssue.getActualHours() != null) {
-            return returnText("Updated", 200);
-        } else {
-            return returnText("Failed to update", 500);
-        }
-
         return returnText(issue.getSummary(), 202);
     }
 
