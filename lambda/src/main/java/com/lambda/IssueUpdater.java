@@ -46,12 +46,7 @@ public class IssueUpdater {
             final String startedAtValue = ((TextCustomField) startedAt.get()).getValue();
 
             if (startedAtValue != null && !startedAtValue.isBlank()) {
-                // get elapsed time from the started time in hours
-                try {
-                    LocalDateTime endAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE);
-                    elapsed = new WorkdayUtils().calculateWorkingHours(LocalDateTime.parse(startedAtValue), endAt);
-                } catch (DateTimeParseException ex) {
-                }
+                elapsed = extracted(startedAtValue);
             }
         }
 
@@ -70,6 +65,22 @@ public class IssueUpdater {
         return client.updateIssue(new UpdateIssueParams(issue.getId()).actualHours(actualHours));
     }
 
+    private Duration extracted(final String startedAtValue) {
+        // get elapsed time from the started time in hours
+        Duration elapsed = Duration.ZERO;
+        try {
+            final String[] startAtArray = startedAtValue.split(";");
+            startAtArray[startAtArray.length - 1] = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
+            for (int i = 0; i < startAtArray.length - 1; i+=2) {
+                LocalDateTime startAt = LocalDateTime.parse(startAtArray[i]);
+                LocalDateTime endAt = LocalDateTime.parse(startAtArray[i + 1]);
+                elapsed = elapsed.plus(new WorkdayUtils().calculateWorkingHours(startAt, endAt));
+            }
+        } catch (DateTimeParseException ex) {
+        }
+        return elapsed;
+    }
+
     public Issue setStartedAt(final int issueId) {
         final Issue issue = client.getIssue(issueId);
         final Optional<CustomField> field = customField(issue, CUSTOM_FIELD_STARTED_AT);
@@ -78,6 +89,10 @@ public class IssueUpdater {
             return null;
 
         String startedAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
+        final String startedAtValue = ((TextCustomField) startedAt.get()).getValue();
+        if (startedAtValue != null && !startedAtValue.isBlank()) {
+            startedAt = startedAtValue + ";" + startedAt;
+        }
         return client.updateIssue(new UpdateIssueParams(issue.getId()).textCustomField(field.get().getId(), startedAt));
     }
 }

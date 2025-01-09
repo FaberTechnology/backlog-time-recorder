@@ -32,9 +32,13 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("Issue is null", 204);
         }
 
-        final StatusType statusType = issue.getStatus().getStatusType();
-        if (!(statusType == StatusType.Closed || statusType == StatusType.InProgress)) {
-            return returnText("Issue is not closed or in progress", 204);
+        int newStatus = issue.getChanges().stream()
+            .filter(change -> change.getField().equals("status"))
+            .findFirst()
+            .map(change -> Integer.parseInt(change.getNewValue()))
+            .orElse(0);
+        if (newStatus == 0) {
+            return returnText("Status did not change", 204);
         }
 
         final String apiKey = System.getenv("BACKLOG_API_KEY");
@@ -43,28 +47,20 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         }
         final IssueUpdater updater = new IssueUpdater(apiKey);
 
-        for (var change : issue.getChanges()) {
-            if (!change.getField().equals("status"))
-                continue;
-
-            int newStatus = Integer.parseInt(change.getNewValue());
-
-            com.nulabinc.backlog4j.Issue updatedIssue = null;
-            if (newStatus == StatusType.Closed.getIntValue())
+        com.nulabinc.backlog4j.Issue updatedIssue = null;
+        switch (StatusType.valueOf(newStatus)) {
+            case Closed:
                 updatedIssue = updater.setActualHours(issue.getId());
-
-            if (newStatus == StatusType.InProgress.getIntValue())
+                break;
+            case InProgress, Open:
                 updatedIssue = updater.setStartedAt(issue.getId());
+                break;
+            default:
+                return returnText("Unhandled status change", 204);
+        }
 
-            if (updatedIssue == null) {
-                return returnText("no issue to Update", 200);
-            }
-
-            if (updatedIssue.getActualHours() != null) {
-                return returnText("Updated", 200);
-            } else {
-                return returnText("Failed to update", 500);
-            }
+        if (updatedIssue == null) {
+            return returnText("No issue to update", 200);
         }
 
         return returnText(issue.getSummary(), 202);
