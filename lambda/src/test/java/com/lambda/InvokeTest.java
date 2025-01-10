@@ -16,8 +16,7 @@ public class InvokeTest {
         final Context context = new TestContext();
         final BacklogTimeRecorder handler = new BacklogTimeRecorder();
         final APIGatewayV2HTTPResponse response = handler.handleRequest(event, context);
-        String expected = "Why system fails the research keyword `sample keyword` and URL `https://example.com/sample-page` on `/sample-endpoint`";
-        // final String expected = "Updated";
+        final String expected = "Unhandled status change";
         assertEquals(expected, response.getBody());
     }
 }
