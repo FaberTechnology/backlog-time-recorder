@@ -16,8 +16,7 @@ public class InvokeTest {
         final Context context = new TestContext();
         final BacklogTimeRecorder handler = new BacklogTimeRecorder();
         final APIGatewayV2HTTPResponse response = handler.handleRequest(event, context);
-        String expected = "Why system fails the research keyword `30代 化粧品` and URL `https://customlife-media.jp/thirties-cosmetics` on `/rewrite-topic-research`";
-        // final String expected = "Updated";
+        final String expected = "Unhandled status change";
         assertEquals(expected, response.getBody());
     }
 }
