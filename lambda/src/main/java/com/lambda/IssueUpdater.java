@@ -69,7 +69,7 @@ public class IssueUpdater {
         Duration elapsed = Duration.ZERO;
         try {
             final String[] startAtArray = startedAtValue.split(";");
-            List<String> timesList = new ArrayList<>(Arrays.asList(startAtArray));
+            List<String> timesList = Arrays.asList(startAtArray);
             timesList.add(LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString());
 
             for (int i = 0; i < timesList.size() - 1; i += 2) {
