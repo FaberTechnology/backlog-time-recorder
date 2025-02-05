@@ -70,7 +70,7 @@ public class IssueUpdater {
         Duration elapsed = Duration.ZERO;
         try {
             final String[] startAtArray = startedAtValue.split(";");
-            startAtArray[startAtArray.length - 1] = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
+            startAtArray[startAtArray.length] = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
             for (int i = 0; i < startAtArray.length - 1; i+=2) {
                 LocalDateTime startAt = LocalDateTime.parse(startAtArray[i]);
                 LocalDateTime endAt = LocalDateTime.parse(startAtArray[i + 1]);
