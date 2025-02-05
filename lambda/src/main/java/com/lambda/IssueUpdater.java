@@ -52,7 +52,7 @@ public class IssueUpdater {
 
         if (elapsed == Duration.ZERO) {
             // get elapsed time from the creation of the issue in hours
-            elapsed = Duration.between(
+            elapsed = new WorkdayUtils().calculateWorkingHours(
                     LocalDateTime.ofInstant(issue.getCreated().toInstant(), ZoneId.systemDefault()),
                     LocalDateTime.now());
         }
