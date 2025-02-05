@@ -25,7 +25,6 @@ public class IssueUpdater {
     private static final String CUSTOM_FIELD_STARTED_AT = "Started at";
     private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
 
-
     public IssueUpdater(final String apiKey) {
         configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
         client = new BacklogClientFactory(configure).newClient();
@@ -70,10 +69,12 @@ public class IssueUpdater {
         Duration elapsed = Duration.ZERO;
         try {
             final String[] startAtArray = startedAtValue.split(";");
-            startAtArray[startAtArray.length] = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
-            for (int i = 0; i < startAtArray.length - 1; i+=2) {
-                LocalDateTime startAt = LocalDateTime.parse(startAtArray[i]);
-                LocalDateTime endAt = LocalDateTime.parse(startAtArray[i + 1]);
+            List<String> timesList = new ArrayList<>(Arrays.asList(startAtArray));
+            timesList.add(LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString());
+
+            for (int i = 0; i < timesList.size() - 1; i += 2) {
+                LocalDateTime startAt = LocalDateTime.parse(timesList.get(i));
+                LocalDateTime endAt = LocalDateTime.parse(timesList.get(i + 1));
                 elapsed = elapsed.plus(new WorkdayUtils().calculateWorkingHours(startAt, endAt));
             }
         } catch (DateTimeParseException ex) {
