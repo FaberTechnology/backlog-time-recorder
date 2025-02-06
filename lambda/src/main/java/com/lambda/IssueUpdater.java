@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +72,7 @@ public class IssueUpdater {
         Duration elapsed = Duration.ZERO;
         try {
             final String[] startAtArray = startedAtValue.split(";");
-            List<String> timesList = Arrays.asList(startAtArray);
+            List<String> timesList = new ArrayList<>(Arrays.asList(startAtArray));
             timesList.add(LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString());
 
             for (int i = 0; i < timesList.size() - 1; i += 2) {
