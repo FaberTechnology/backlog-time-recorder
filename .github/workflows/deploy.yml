@@ -44,3 +44,5 @@ jobs:
 
       - name: Deploy
         run: cdk deploy --require-approval never
+        env:
+          BACKLOG_API_KEY: ${{ secrets.BACKLOG_API_KEY }}
