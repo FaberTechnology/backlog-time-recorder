@@ -19,6 +19,13 @@ jobs:
         with:
           node-version: lts/*
 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: '17'
+          cache: maven
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -30,8 +37,10 @@ jobs:
         run: npm install -g aws-cdk
 
       - name: Build project
-        run: mvn clean package
+        run: mvn -B clean package
         working-directory: lambda
+        env:
+          BACKLOG_API_KEY: ${{ secrets.BACKLOG_API_KEY }}
 
       - name: Deploy
         run: cdk deploy --require-approval never
