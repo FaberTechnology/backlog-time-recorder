@@ -5,8 +5,8 @@ on:
       - master
   pull_request:
     branches:
-      - feat/cd
-      
+      - feature/cd
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
