@@ -4,6 +4,7 @@ import com.lambda.utils.WorkdayUtils;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
@@ -118,9 +119,9 @@ public class IssueUpdater {
             return null;
         }
         
-        // Convert to LocalDateTime
-        final LocalDateTime start = LocalDateTime.ofInstant(startDate.toInstant(), JST_ZONE);
-        final LocalDateTime due = LocalDateTime.ofInstant(dueDate.toInstant(), JST_ZONE);
+        // Convert to LocalDate (dates only, no time component)
+        final LocalDate start = LocalDate.ofInstant(startDate.toInstant(), JST_ZONE);
+        final LocalDate due = LocalDate.ofInstant(dueDate.toInstant(), JST_ZONE);
         
         // Calculate required milestones in YYYY-MMM format
         final Set<String> requiredMilestones = calculateRequiredMilestones(start, due);
@@ -160,7 +161,7 @@ public class IssueUpdater {
             .milestoneIds(allMilestoneIds));
     }
     
-    private Set<String> calculateRequiredMilestones(final LocalDateTime start, final LocalDateTime due) {
+    private Set<String> calculateRequiredMilestones(final LocalDate start, final LocalDate due) {
         final Set<String> milestones = new HashSet<>();
         final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMM");
         
