@@ -3,6 +3,7 @@ package com.lambda.models;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -21,6 +22,8 @@ public class Issue {
     @JsonDeserialize(as = StatusJSONImpl.class)
     Status status;
     String summary;
+    Date startDate;
+    Date dueDate;
 
     public int getId() {
         return id;
@@ -43,5 +46,13 @@ public class Issue {
 
     public String getSummary() {
         return summary;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
     }
 }
