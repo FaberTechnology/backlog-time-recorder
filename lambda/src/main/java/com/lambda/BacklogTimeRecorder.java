@@ -32,6 +32,24 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("Issue is null", 204);
         }
 
+        final String apiKey = System.getenv("BACKLOG_API_KEY");
+        if (apiKey == null) {
+            throw new RuntimeException("BACKLOG_API_KEY is not set");
+        }
+        final IssueUpdater updater = new IssueUpdater(apiKey);
+
+        // Check for start date or due date changes
+        boolean hasDateChange = issue.getChanges().stream()
+            .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("dueDate"));
+        
+        if (hasDateChange) {
+            try {
+                updater.updateMilestones(issue.getId());
+            } catch (Exception e) {
+                logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(), LogLevel.ERROR);
+            }
+        }
+
         int newStatus = issue.getChanges().stream()
             .filter(change -> change.getField().equals("status"))
             .findFirst()
@@ -40,12 +58,6 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         if (newStatus == 0) {
             return returnText("Status did not change", 204);
         }
-
-        final String apiKey = System.getenv("BACKLOG_API_KEY");
-        if (apiKey == null) {
-            throw new RuntimeException("BACKLOG_API_KEY is not set");
-        }
-        final IssueUpdater updater = new IssueUpdater(apiKey);
 
         com.nulabinc.backlog4j.Issue updatedIssue = null;
         switch (StatusType.valueOf(newStatus)) {

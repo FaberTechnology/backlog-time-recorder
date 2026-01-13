@@ -4,18 +4,26 @@ import com.lambda.utils.WorkdayUtils;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.nulabinc.backlog4j.BacklogClient;
 import com.nulabinc.backlog4j.BacklogClientFactory;
 import com.nulabinc.backlog4j.CustomField;
 import com.nulabinc.backlog4j.Issue;
+import com.nulabinc.backlog4j.Milestone;
 import com.nulabinc.backlog4j.api.option.UpdateIssueParams;
 import com.nulabinc.backlog4j.conf.BacklogConfigure;
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure;
@@ -98,5 +106,73 @@ public class IssueUpdater {
             startedAt = startedAtValue + ";" + startedAt;
         }
         return client.updateIssue(new UpdateIssueParams(issue.getId()).textCustomField(field.get().getId(), startedAt));
+    }
+
+    public Issue updateMilestones(final int issueId) {
+        final Issue issue = client.getIssue(issueId);
+        
+        // Get start date and due date
+        final Date startDate = issue.getStartDate();
+        final Date dueDate = issue.getDueDate();
+        
+        if (startDate == null || dueDate == null) {
+            return null;
+        }
+        
+        // Convert to LocalDate (dates only, no time component)
+        final LocalDate start = LocalDate.ofInstant(startDate.toInstant(), JST_ZONE);
+        final LocalDate due = LocalDate.ofInstant(dueDate.toInstant(), JST_ZONE);
+        
+        // Calculate required milestones in YYYY-MMM format
+        final Set<String> requiredMilestones = calculateRequiredMilestones(start, due);
+        
+        // Get current milestones
+        final Set<String> currentMilestoneNames = issue.getMilestone().stream()
+            .map(Milestone::getName)
+            .collect(Collectors.toSet());
+        
+        // Get all project milestones
+        final List<Milestone> projectMilestones = client.getMilestones(issue.getProjectId());
+        
+        // Find milestones to add (required but not already set)
+        final Set<String> milestonesToAdd = requiredMilestones.stream()
+            .filter(name -> !currentMilestoneNames.contains(name))
+            .collect(Collectors.toSet());
+        
+        if (milestonesToAdd.isEmpty()) {
+            return null;
+        }
+        
+        // Get milestone IDs for the ones to add
+        final List<Long> newMilestoneIds = projectMilestones.stream()
+            .filter(m -> milestonesToAdd.contains(m.getName()))
+            .map(Milestone::getId)
+            .collect(Collectors.toList());
+        
+        // Combine existing milestone IDs with new ones
+        final List<Long> allMilestoneIds = new ArrayList<>();
+        allMilestoneIds.addAll(issue.getMilestone().stream()
+            .map(Milestone::getId)
+            .collect(Collectors.toList()));
+        allMilestoneIds.addAll(newMilestoneIds);
+        
+        // Update issue with all milestones
+        return client.updateIssue(new UpdateIssueParams(issue.getId())
+            .milestoneIds(allMilestoneIds));
+    }
+    
+    private Set<String> calculateRequiredMilestones(final LocalDate start, final LocalDate due) {
+        final Set<String> milestones = new HashSet<>();
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMM");
+        
+        YearMonth current = YearMonth.from(start);
+        final YearMonth end = YearMonth.from(due);
+        
+        while (!current.isAfter(end)) {
+            milestones.add(current.format(formatter));
+            current = current.plusMonths(1);
+        }
+        
+        return milestones;
     }
 }
