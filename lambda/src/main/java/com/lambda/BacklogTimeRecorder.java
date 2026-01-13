@@ -43,7 +43,11 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("dueDate"));
         
         if (hasDateChange) {
-            updater.updateMilestones(issue.getId());
+            try {
+                updater.updateMilestones(issue.getId());
+            } catch (Exception e) {
+                logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(), LogLevel.ERROR);
+            }
         }
 
         int newStatus = issue.getChanges().stream()
