@@ -40,7 +40,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
 
         // Check for start date or due date changes
         boolean hasDateChange = issue.getChanges().stream()
-            .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("dueDate"));
+            .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("limitDate"));
         
         if (hasDateChange) {
             try {
