@@ -42,30 +42,43 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         boolean hasDateChange = issue.getChanges().stream()
             .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("limitDate"));
         
-        if (hasDateChange) {
-            updater.updateMilestones(issue.getId());
-        }
-
+        // Check for status changes
         int newStatus = issue.getChanges().stream()
             .filter(change -> change.getField().equals("status"))
             .findFirst()
             .map(change -> Integer.parseInt(change.getNewValue()))
             .orElse(0);
-        if (newStatus == 0) {
-            return returnText("Status did not change", 204);
+        
+        if (!hasDateChange && newStatus == 0) {
+            return returnText("No relevant changes", 204);
         }
 
-        com.nulabinc.backlog4j.Issue updatedIssue = null;
-        switch (StatusType.valueOf(newStatus)) {
-            case Closed:
-                updatedIssue = updater.setActualHours(issue.getId());
-                break;
-            case InProgress, Open:
-                updatedIssue = updater.setStartedAt(issue.getId());
-                break;
-            default:
-                return returnText("Unhandled status change", 204);
+        // Determine what updates to perform
+        boolean shouldUpdateMilestones = hasDateChange;
+        boolean shouldSetActualHours = false;
+        boolean shouldSetStartedAt = false;
+        
+        if (newStatus != 0) {
+            switch (StatusType.valueOf(newStatus)) {
+                case Closed:
+                    shouldSetActualHours = true;
+                    break;
+                case InProgress, Open:
+                    shouldSetStartedAt = true;
+                    break;
+                default:
+                    // No action for other statuses
+                    break;
+            }
         }
+        
+        // Perform all updates in a single API call
+        com.nulabinc.backlog4j.Issue updatedIssue = updater.updateIssueBatch(
+            issue.getId(), 
+            shouldUpdateMilestones, 
+            shouldSetActualHours, 
+            shouldSetStartedAt
+        );
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);

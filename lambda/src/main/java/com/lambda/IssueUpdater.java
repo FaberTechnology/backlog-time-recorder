@@ -47,32 +47,35 @@ public class IssueUpdater {
                 .findFirst();
     }
 
-    public Issue setActualHours(final int issueId) {
-        final Issue issue = client.getIssue(issueId);
+    /**
+     * Calculate actual hours for an issue based on started at time or creation time.
+     * @return actual hours, or null if invalid
+     */
+    private Float calculateActualHours(final Issue issue) {
         final Optional<CustomField> startedAt = customField(issue, CUSTOM_FIELD_STARTED_AT);
-
         Duration elapsed = Duration.ZERO;
+        
         if (startedAt.isPresent() && startedAt.get() instanceof TextCustomField) {
             final String startedAtValue = ((TextCustomField) startedAt.get()).getValue();
-
             if (startedAtValue != null && !startedAtValue.isBlank()) {
                 elapsed = extracted(startedAtValue);
             }
         }
-
+        
         if (elapsed == Duration.ZERO) {
-            // get elapsed time from the creation of the issue in hours
             elapsed = new WorkdayUtils().calculateWorkingHours(
-                    LocalDateTime.ofInstant(issue.getCreated().toInstant(), ZoneId.systemDefault()),
-                    LocalDateTime.now());
+                LocalDateTime.ofInstant(issue.getCreated().toInstant(), ZoneId.systemDefault()),
+                LocalDateTime.now());
         }
+        
         DecimalFormat df = new DecimalFormat("0.0");
         float actualHours = Float.parseFloat((df.format(elapsed.toMinutes() / 60.0)));
-
-        if (actualHours > 999 || actualHours < 0)
+        
+        if (actualHours < 0 || actualHours > 999) {
             return null;
-
-        return client.updateIssue(new UpdateIssueParams(issue.getId()).actualHours(actualHours));
+        }
+        
+        return actualHours;
     }
 
     private Duration extracted(final String startedAtValue) {
@@ -93,25 +96,22 @@ public class IssueUpdater {
         return elapsed;
     }
 
-    public Issue setStartedAt(final int issueId) {
-        final Issue issue = client.getIssue(issueId);
-        final Optional<CustomField> field = customField(issue, CUSTOM_FIELD_STARTED_AT);
-
-        if (!field.isPresent())
-            return null;
-
+    /**
+     * Append current time to existing started at value.
+     */
+    private String appendCurrentTimeToStartedAt(final String existingValue) {
         String startedAt = LocalDateTime.ofInstant(Instant.now(), JST_ZONE).toString();
-        final String startedAtValue = ((TextCustomField) field.get()).getValue();
-        if (startedAtValue != null && !startedAtValue.isBlank()) {
-            startedAt = startedAtValue + ";" + startedAt;
+        if (existingValue != null && !existingValue.isBlank()) {
+            startedAt = existingValue + ";" + startedAt;
         }
-        return client.updateIssue(new UpdateIssueParams(issue.getId()).textCustomField(field.get().getId(), startedAt));
+        return startedAt;
     }
 
-    public Issue updateMilestones(final int issueId) {
-        final Issue issue = client.getIssue(issueId);
-        
-        // Get start date and due date
+    /**
+     * Calculate milestone IDs to set based on issue dates.
+     * @return list of milestone IDs including existing and new ones, or null if no changes needed
+     */
+    private List<Long> calculateMilestoneIdsToSet(final Issue issue) {
         final Date startDate = issue.getStartDate();
         final Date dueDate = issue.getDueDate();
         
@@ -119,22 +119,14 @@ public class IssueUpdater {
             return null;
         }
         
-        // Convert to LocalDate (dates only, no time component)
         final LocalDate start = LocalDate.ofInstant(startDate.toInstant(), JST_ZONE);
         final LocalDate due = LocalDate.ofInstant(dueDate.toInstant(), JST_ZONE);
-        
-        // Calculate required milestones in YYYY-MMM format
         final Set<String> requiredMilestones = calculateRequiredMilestones(start, due);
         
-        // Get current milestones
         final Set<String> currentMilestoneNames = issue.getMilestone().stream()
             .map(Milestone::getName)
             .collect(Collectors.toSet());
         
-        // Get all project milestones
-        final List<Milestone> projectMilestones = client.getMilestones(issue.getProjectId());
-        
-        // Find milestones to add (required but not already set)
         final Set<String> milestonesToAdd = requiredMilestones.stream()
             .filter(name -> !currentMilestoneNames.contains(name))
             .collect(Collectors.toSet());
@@ -143,22 +135,19 @@ public class IssueUpdater {
             return null;
         }
         
-        // Get milestone IDs for the ones to add
+        final List<Milestone> projectMilestones = client.getMilestones(issue.getProjectId());
         final List<Long> newMilestoneIds = projectMilestones.stream()
             .filter(m -> milestonesToAdd.contains(m.getName()))
             .map(Milestone::getId)
             .collect(Collectors.toList());
         
-        // Combine existing milestone IDs with new ones
         final List<Long> allMilestoneIds = new ArrayList<>();
         allMilestoneIds.addAll(issue.getMilestone().stream()
             .map(Milestone::getId)
             .collect(Collectors.toList()));
         allMilestoneIds.addAll(newMilestoneIds);
         
-        // Update issue with all milestones
-        return client.updateIssue(new UpdateIssueParams(issue.getId())
-            .milestoneIds(allMilestoneIds));
+        return allMilestoneIds;
     }
     
     private Set<String> calculateRequiredMilestones(final LocalDate start, final LocalDate due) {
@@ -174,5 +163,60 @@ public class IssueUpdater {
         }
         
         return milestones;
+    }
+    
+    /**
+     * Update issue with milestones, actual hours, and/or started time in a single API call.
+     * This reduces the number of comments created on the issue.
+     * 
+     * @param issueId the issue ID
+     * @param shouldUpdateMilestones whether to update milestones
+     * @param shouldSetActualHours whether to set actual hours
+     * @param shouldSetStartedAt whether to set started at time
+     * @return the updated issue, or null if no updates were made
+     */
+    public Issue updateIssueBatch(final int issueId, 
+                                   final boolean shouldUpdateMilestones,
+                                   final boolean shouldSetActualHours,
+                                   final boolean shouldSetStartedAt) {
+        final Issue issue = client.getIssue(issueId);
+        final UpdateIssueParams params = new UpdateIssueParams(issue.getId());
+        boolean hasUpdates = false;
+        
+        // Handle milestone updates
+        if (shouldUpdateMilestones) {
+            final List<Long> milestoneIds = calculateMilestoneIdsToSet(issue);
+            if (milestoneIds != null) {
+                params.milestoneIds(milestoneIds);
+                hasUpdates = true;
+            }
+        }
+        
+        // Handle actual hours
+        if (shouldSetActualHours) {
+            final Float actualHours = calculateActualHours(issue);
+            if (actualHours != null) {
+                params.actualHours(actualHours);
+                hasUpdates = true;
+            }
+        }
+        
+        // Handle started at time
+        if (shouldSetStartedAt) {
+            final Optional<CustomField> field = customField(issue, CUSTOM_FIELD_STARTED_AT);
+            if (field.isPresent()) {
+                final String startedAt = appendCurrentTimeToStartedAt(
+                    ((TextCustomField) field.get()).getValue());
+                params.textCustomField(field.get().getId(), startedAt);
+                hasUpdates = true;
+            }
+        }
+        
+        // Only update if there are changes
+        if (!hasUpdates) {
+            return null;
+        }
+        
+        return client.updateIssue(params);
     }
 }
