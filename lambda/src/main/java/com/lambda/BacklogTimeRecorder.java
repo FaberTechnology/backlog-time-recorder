@@ -66,8 +66,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
                     shouldSetStartedAt = true;
                     break;
                 default:
-                    // No action for other statuses
-                    break;
+                    return returnText("Unhandled status change", 204);
             }
         }
         
