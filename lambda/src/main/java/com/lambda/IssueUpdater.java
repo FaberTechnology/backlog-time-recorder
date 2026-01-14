@@ -175,7 +175,7 @@ public class IssueUpdater {
      * @param shouldSetStartedAt whether to set started at time
      * @return the updated issue, or null if no updates were made
      */
-    public Issue updateIssueBatch(final int issueId, 
+    public Issue updateIssueFields(final int issueId, 
                                    final boolean shouldUpdateMilestones,
                                    final boolean shouldSetActualHours,
                                    final boolean shouldSetStartedAt) {

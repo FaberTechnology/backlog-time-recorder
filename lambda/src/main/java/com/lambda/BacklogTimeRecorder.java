@@ -71,7 +71,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         }
         
         // Perform all updates in a single API call
-        com.nulabinc.backlog4j.Issue updatedIssue = updater.updateIssueBatch(
+        com.nulabinc.backlog4j.Issue updatedIssue = updater.updateIssueFields(
             issue.getId(), 
             shouldUpdateMilestones, 
             shouldSetActualHours, 
