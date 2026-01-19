@@ -13,6 +13,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,12 @@ public class IssueUpdater {
 
     private static final String CUSTOM_FIELD_STARTED_AT = "Started at";
     private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
+
+    public enum UpdateField {
+        MILESTONES,
+        ACTUAL_HOURS,
+        STARTED_AT
+    }
 
     public IssueUpdater(final String apiKey) {
         configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
@@ -165,26 +172,20 @@ public class IssueUpdater {
         return milestones;
     }
     
-    /**
-     * Update issue with milestones, actual hours, and/or started time in a single API call.
+/**
+     * Update issue with specified fields in a single API call.
      * This reduces the number of comments created on the issue.
      * 
      * @param issueId the issue ID
-     * @param shouldUpdateMilestones whether to update milestones
-     * @param shouldSetActualHours whether to set actual hours
-     * @param shouldSetStartedAt whether to set started at time
+     * @param fieldsToUpdate set of fields to update
      * @return the updated issue, or null if no updates were made
      */
-    public Issue updateIssueFields(final int issueId, 
-                                   final boolean shouldUpdateMilestones,
-                                   final boolean shouldSetActualHours,
-                                   final boolean shouldSetStartedAt) {
+    public Issue updateIssueFields(final int issueId, final EnumSet<UpdateField> fieldsToUpdate) {
         final Issue issue = client.getIssue(issueId);
         final UpdateIssueParams params = new UpdateIssueParams(issue.getId());
         boolean hasUpdates = false;
         
-        // Handle milestone updates
-        if (shouldUpdateMilestones) {
+        if (fieldsToUpdate.contains(UpdateField.MILESTONES)) {
             final List<Long> milestoneIds = calculateMilestoneIdsToSet(issue);
             if (milestoneIds != null) {
                 params.milestoneIds(milestoneIds);
@@ -192,8 +193,7 @@ public class IssueUpdater {
             }
         }
         
-        // Handle actual hours
-        if (shouldSetActualHours) {
+        if (fieldsToUpdate.contains(UpdateField.ACTUAL_HOURS)) {
             final Float actualHours = calculateActualHours(issue);
             if (actualHours != null) {
                 params.actualHours(actualHours);
@@ -201,8 +201,7 @@ public class IssueUpdater {
             }
         }
         
-        // Handle started at time
-        if (shouldSetStartedAt) {
+        if (fieldsToUpdate.contains(UpdateField.STARTED_AT)) {
             final Optional<CustomField> field = customField(issue, CUSTOM_FIELD_STARTED_AT);
             if (field.isPresent()) {
                 final String startedAt = appendCurrentTimeToStartedAt(
@@ -212,7 +211,6 @@ public class IssueUpdater {
             }
         }
         
-        // Only update if there are changes
         if (!hasUpdates) {
             return null;
         }

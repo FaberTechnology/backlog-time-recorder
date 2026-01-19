@@ -1,6 +1,7 @@
 package com.lambda;
 
 import java.util.Base64;
+import java.util.EnumSet;
 import java.util.HashMap;
 
 import com.amazonaws.services.lambda.runtime.Context;
@@ -52,18 +53,20 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("No relevant changes", 204);
         }
 
-        // Determine what updates to perform
-        boolean shouldUpdateMilestones = hasDateChange;
-        boolean shouldSetActualHours = false;
-        boolean shouldSetStartedAt = false;
+// Determine what updates to perform
+        EnumSet<IssueUpdater.UpdateField> fieldsToUpdate = EnumSet.noneOf(IssueUpdater.UpdateField.class);
+        
+        if (hasDateChange) {
+            fieldsToUpdate.add(IssueUpdater.UpdateField.MILESTONES);
+        }
         
         if (newStatus != 0) {
             switch (StatusType.valueOf(newStatus)) {
                 case Closed:
-                    shouldSetActualHours = true;
+                    fieldsToUpdate.add(IssueUpdater.UpdateField.ACTUAL_HOURS);
                     break;
                 case InProgress, Open:
-                    shouldSetStartedAt = true;
+                    fieldsToUpdate.add(IssueUpdater.UpdateField.STARTED_AT);
                     break;
                 default:
                     // No action for other statuses
@@ -74,9 +77,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         // Perform all updates in a single API call
         com.nulabinc.backlog4j.Issue updatedIssue = updater.updateIssueFields(
             issue.getId(), 
-            shouldUpdateMilestones, 
-            shouldSetActualHours, 
-            shouldSetStartedAt
+            fieldsToUpdate
         );
 
         if (updatedIssue == null) {

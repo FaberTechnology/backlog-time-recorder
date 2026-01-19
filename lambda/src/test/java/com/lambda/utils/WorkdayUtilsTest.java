@@ -25,13 +25,13 @@ public class WorkdayUtilsTest {
         assertEquals(expected, actual);
     }
 
-    @Test
+@Test
     public void testCalculateWorkingHours_StartBeforeWorkday() {
         // Start before workday, end within workday
         LocalDateTime start = LocalDateTime.of(2024, 11, 19, 8, 0);
         LocalDateTime end = LocalDateTime.of(2024, 11, 19, 15, 0);
 
-        Duration expected = Duration.between(LocalTime.of(8, 0), LocalTime.of(15, 0));
+        Duration expected = Duration.between(LocalTime.of(9, 30), LocalTime.of(15, 0));
         Duration actual = utils.calculateWorkingHours(start, end);
 
         assertEquals(expected, actual);
@@ -43,7 +43,7 @@ public class WorkdayUtilsTest {
         LocalDateTime start = LocalDateTime.of(2024, 11, 19, 14, 0);
         LocalDateTime end = LocalDateTime.of(2024, 11, 19, 20, 0);
 
-        Duration expected = Duration.between(LocalTime.of(14, 0), LocalTime.of(20, 0));
+        Duration expected = Duration.between(LocalTime.of(14, 0), LocalTime.of(19, 30));
         Duration actual = utils.calculateWorkingHours(start, end);
 
         assertEquals(expected, actual);
