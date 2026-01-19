@@ -1,5 +1,6 @@
 package com.lambda;
 
+import com.lambda.TimeCalculator;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -116,19 +117,19 @@ public class IssueUpdaterTest {
     }
 
     /**
-     * Helper method to invoke private calculateRequiredMilestones method using reflection
+     * Helper method to invoke calculateRequiredMilestones method using reflection
      */
     @SuppressWarnings("unchecked")
     private Set<String> invokeCalculateRequiredMilestones(LocalDate start, LocalDate due) throws Exception {
-        // Create a mock IssueUpdater instance with dummy API key
-        IssueUpdater updater = new IssueUpdater("dummy-api-key-for-testing");
+        // Create a TimeCalculator instance
+        TimeCalculator calculator = new TimeCalculator();
 
         // Get the private method using reflection
-        Method method = IssueUpdater.class.getDeclaredMethod("calculateRequiredMilestones", 
+        Method method = TimeCalculator.class.getDeclaredMethod("calculateRequiredMilestones", 
             LocalDate.class, LocalDate.class);
         method.setAccessible(true);
 
         // Invoke the method
-        return (Set<String>) method.invoke(updater, start, due);
+        return (Set<String>) method.invoke(calculator, start, due);
     }
 }
