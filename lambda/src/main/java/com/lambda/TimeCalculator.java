@@ -54,8 +54,6 @@ public class TimeCalculator {
         return updateData;
     }
 
-    
-
     /**
      * Calculate actual hours for an issue based on started at time or creation time.
      */
