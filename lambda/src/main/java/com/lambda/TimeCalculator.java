@@ -85,7 +85,7 @@ public class TimeCalculator {
         }
         
         if (elapsed == Duration.ZERO) {
-            elapsed = new WorkdayUtils().calculateWorkingHours(
+            elapsed = WorkdayUtils.calculateWorkingHours(
                 LocalDateTime.ofInstant(issue.getCreated().toInstant(), AppConstants.SYSTEM_ZONE),
                 LocalDateTime.now());
         }
@@ -113,7 +113,7 @@ public class TimeCalculator {
             for (int i = 0; i < timesList.size() - 1; i += 2) {
                 LocalDateTime startAt = LocalDateTime.parse(timesList.get(i));
                 LocalDateTime endAt = LocalDateTime.parse(timesList.get(i + 1));
-                elapsed = elapsed.plus(new WorkdayUtils().calculateWorkingHours(startAt, endAt));
+                elapsed = elapsed.plus(WorkdayUtils.calculateWorkingHours(startAt, endAt));
             }
         } catch (DateTimeParseException ex) {
             System.err.println("Failed to parse started at timestamps: " + ex.getMessage());

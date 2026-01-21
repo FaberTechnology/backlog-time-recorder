@@ -13,7 +13,7 @@ public class WorkdayUtils {
     private static final LocalTime WORK_START_TIME = LocalTime.of(9, 30); // Start at 09:30 JST
     private static final LocalTime WORK_END_TIME = LocalTime.of(19, 30); // End at 17:30 ICT as 19:30 JST
     
-    public Duration calculateWorkingHours(final LocalDateTime start, final LocalDateTime end) {
+    public static Duration calculateWorkingHours(final LocalDateTime start, final LocalDateTime end) {
         LocalDateTime current = start;
         Duration totalWorkingDuration = Duration.ZERO;
 
@@ -33,11 +33,11 @@ public class WorkdayUtils {
         return totalWorkingDuration;
     }
 
-    private boolean isWeekday(final LocalDateTime dateTime) {
+    private static boolean isWeekday(final LocalDateTime dateTime) {
         return !WEEKENDS.contains(dateTime.getDayOfWeek());
     }
 
-    private boolean isSameDate(final LocalDateTime dateTime1, final LocalDateTime dateTime2) {
+    private static boolean isSameDate(final LocalDateTime dateTime1, final LocalDateTime dateTime2) {
         return dateTime1.toLocalDate().equals(dateTime2.toLocalDate());
     }
 }
