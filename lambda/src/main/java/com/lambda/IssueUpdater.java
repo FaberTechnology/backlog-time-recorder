@@ -67,14 +67,14 @@ public class IssueUpdater {
             params.milestoneIds(milestoneIds);
         }
         
-        if (timeData.actualHours != null) {
-            params.actualHours(timeData.actualHours);
+        if (timeData.getActualHours() != null) {
+            params.actualHours(timeData.getActualHours());
         }
         
-        if (timeData.startedAt != null) {
+        if (timeData.getStartedAt() != null) {
             final Optional<CustomField> field = IssueUtils.customField(issue, AppConstants.CUSTOM_FIELD_STARTED_AT);
             if (field.isPresent()) {
-                params.textCustomField(field.get().getId(), timeData.startedAt);
+                params.textCustomField(field.get().getId(), timeData.getStartedAt());
             }
         }
         

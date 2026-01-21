@@ -25,11 +25,27 @@ import java.util.Set;
 public class TimeCalculator {
 
     public static class TimeUpdateData {
-        public Float actualHours;
-        public String startedAt;
+        private Float actualHours;
+        private String startedAt;
 
         public boolean hasTimeUpdates() {
             return actualHours != null || startedAt != null;
+        }
+
+        public Float getActualHours() {
+            return actualHours;
+        }
+
+        public void setActualHours(Float actualHours) {
+            this.actualHours = actualHours;
+        }
+
+        public String getStartedAt() {
+            return startedAt;
+        }
+
+        public void setStartedAt(String startedAt) {
+            this.startedAt = startedAt;
         }
     }
 
@@ -40,14 +56,14 @@ public class TimeCalculator {
         TimeUpdateData updateData = new TimeUpdateData();
 
         if (fieldsToUpdate.contains(IssueUpdater.UpdateField.ACTUAL_HOURS)) {
-            updateData.actualHours = calculateActualHours(issue);
+            updateData.setActualHours(calculateActualHours(issue));
         }
 
         if (fieldsToUpdate.contains(IssueUpdater.UpdateField.STARTED_AT)) {
             final Optional<CustomField> field = IssueUtils.customField(issue, AppConstants.CUSTOM_FIELD_STARTED_AT);
             if (field.isPresent()) {
-                updateData.startedAt = appendCurrentTimeToStartedAt(
-                    ((TextCustomField) field.get()).getValue());
+                updateData.setStartedAt(appendCurrentTimeToStartedAt(
+                    ((TextCustomField) field.get()).getValue()));
             }
         }
 
