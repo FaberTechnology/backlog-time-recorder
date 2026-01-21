@@ -6,7 +6,7 @@ import com.nulabinc.backlog4j.CustomField;
 import com.nulabinc.backlog4j.Issue;
 import com.nulabinc.backlog4j.internal.json.customFields.TextCustomField;
 
-import java.text.DecimalFormat;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -90,8 +90,7 @@ public class TimeCalculator {
                 LocalDateTime.now());
         }
         
-        DecimalFormat df = new DecimalFormat(AppConstants.DECIMAL_FORMAT_HOURS);
-        float actualHours = Float.parseFloat((df.format(elapsed.toMinutes() / 60.0)));
+        float actualHours = Math.round((elapsed.toMinutes() / 60.0f) * 10) / 10.0f;
         
         if (actualHours < 0 || actualHours > AppConstants.MAX_ACTUAL_HOURS) {
             return null;

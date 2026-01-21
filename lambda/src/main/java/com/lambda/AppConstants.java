@@ -17,7 +17,6 @@ public final class AppConstants {
     // Business logic constants
     public static final float MAX_ACTUAL_HOURS = 999;
     public static final String DATE_FORMAT_MILESTONE = "yyyy-MMM";
-    public static final String DECIMAL_FORMAT_HOURS = "0.0";
     public static final String TIME_SEPARATOR = ";";
     
     // API configuration
