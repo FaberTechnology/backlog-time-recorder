@@ -20,8 +20,6 @@ public class IssueUpdater {
     private final TimeCalculator timeCalculator;
     private final MilestoneCalculator milestoneCalculator;
 
-    
-
     public enum UpdateField {
         MILESTONES,
         ACTUAL_HOURS,
