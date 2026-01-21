@@ -53,7 +53,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("No relevant changes", 204);
         }
 
-// Determine what updates to perform
+        // Determine what updates to perform
         EnumSet<IssueUpdater.UpdateField> fieldsToUpdate = EnumSet.noneOf(IssueUpdater.UpdateField.class);
         
         if (hasDateChange) {
