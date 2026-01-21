@@ -73,7 +73,7 @@ public class TimeCalculator {
     /**
      * Calculate actual hours for an issue based on started at time or creation time.
      */
-    public Float calculateActualHours(final Issue issue) {
+    private Float calculateActualHours(final Issue issue) {
         final Optional<CustomField> startedAt = IssueUtils.customField(issue, AppConstants.CUSTOM_FIELD_STARTED_AT);
         Duration elapsed = Duration.ZERO;
         
