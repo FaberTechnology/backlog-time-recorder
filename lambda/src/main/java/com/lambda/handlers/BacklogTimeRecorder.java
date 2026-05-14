@@ -16,15 +16,7 @@ import com.nulabinc.backlog4j.internal.json.Jackson;
 
 public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 
-    private final IssueUpdateOrchestrator orchestrator;
-
-    public BacklogTimeRecorder() {
-        final String apiKey = System.getenv("BACKLOG_API_KEY");
-        if (apiKey == null) {
-            throw new RuntimeException("BACKLOG_API_KEY is not set");
-        }
-        this.orchestrator = new IssueUpdateOrchestrator(apiKey);
-    }
+    private IssueUpdateOrchestrator orchestrator;
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(final APIGatewayV2HTTPEvent event, final Context context) {
@@ -58,7 +50,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
                     && statusType != StatusType.Open) {
                 if (hasDateChange) {
                     try {
-                        orchestrator.updateIssue(issue.getId(), 0);
+                        getOrchestrator().updateIssue(issue.getId(), 0);
                     } catch (Exception e) {
                         logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
                                 LogLevel.ERROR);
@@ -71,7 +63,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         if (newStatus == 0) {
             if (hasDateChange) {
                 try {
-                    orchestrator.updateIssue(issue.getId(), 0);
+                    getOrchestrator().updateIssue(issue.getId(), 0);
                 } catch (Exception e) {
                     logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
                             LogLevel.ERROR);
@@ -80,13 +72,24 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("Status did not change", 204);
         }
 
-        final com.nulabinc.backlog4j.Issue updatedIssue = orchestrator.updateIssue(issue.getId(), newStatus);
+        final com.nulabinc.backlog4j.Issue updatedIssue = getOrchestrator().updateIssue(issue.getId(), newStatus);
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);
         }
 
         return returnText(issue.getSummary(), 202);
+    }
+
+    private IssueUpdateOrchestrator getOrchestrator() {
+        if (orchestrator == null) {
+            final String apiKey = System.getenv("BACKLOG_API_KEY");
+            if (apiKey == null) {
+                throw new RuntimeException("BACKLOG_API_KEY is not set");
+            }
+            orchestrator = new IssueUpdateOrchestrator(apiKey);
+        }
+        return orchestrator;
     }
 
     private APIGatewayV2HTTPResponse returnText(final String text, final int status) {
