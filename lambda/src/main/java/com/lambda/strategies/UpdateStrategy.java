@@ -5,6 +5,6 @@ import com.lambda.models.ProjectContext;
 import com.nulabinc.backlog4j.api.option.UpdateIssueParams;
 
 public interface UpdateStrategy {
-    boolean canApply(IssueWrapper issueWrapper, ProjectContext projectContext);
+    boolean canApply(IssueWrapper issueWrapper, ProjectContext projectContext, int newStatusCode);
     void apply(IssueWrapper issueWrapper, ProjectContext projectContext, UpdateIssueParams params);
 }
