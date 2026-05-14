@@ -21,9 +21,9 @@ public class StartedAtUpdateStrategy implements UpdateStrategy {
     }
 
     @Override
-    public boolean canApply(final IssueWrapper issueWrapper, final ProjectContext projectContext,
-            final int newStatusCode) {
-        if (newStatusCode != StatusType.InProgress.getIntValue() && newStatusCode != StatusType.Open.getIntValue()) {
+    public boolean canApply(final IssueWrapper issueWrapper, final ProjectContext projectContext) {
+        final int status = issueWrapper.getNewStatusCode();
+        if (status != StatusType.InProgress.getIntValue() && status != StatusType.Open.getIntValue()) {
             return false;
         }
         return issueWrapper.getCustomField(CUSTOM_FIELD_STARTED_AT).isPresent();
