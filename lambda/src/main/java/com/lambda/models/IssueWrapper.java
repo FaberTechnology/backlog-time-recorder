@@ -26,8 +26,8 @@ public class IssueWrapper {
         this.newStatusCode = newStatusCode;
     }
 
-    public int getId() {
-        return (int) rawIssue.getId();
+    public long getId() {
+        return rawIssue.getId();
     }
 
     public long getProjectId() {
