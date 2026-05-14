@@ -19,11 +19,9 @@ public class IssueWrapper {
     private static final ZoneId JST_ZONE = ZoneId.of("Asia/Tokyo");
 
     private final Issue rawIssue;
-    private final int newStatusCode;
 
-    public IssueWrapper(final Issue rawIssue, final int newStatusCode) {
+    public IssueWrapper(final Issue rawIssue) {
         this.rawIssue = rawIssue;
-        this.newStatusCode = newStatusCode;
     }
 
     public long getId() {
@@ -59,10 +57,6 @@ public class IssueWrapper {
 
     public LocalDateTime getCreatedAt() {
         return LocalDateTime.ofInstant(rawIssue.getCreated().toInstant(), ZoneId.systemDefault());
-    }
-
-    public int getNewStatusCode() {
-        return newStatusCode;
     }
 
     public Optional<CustomField> getCustomField(final String name) {

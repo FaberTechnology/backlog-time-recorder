@@ -19,7 +19,8 @@ public class MilestoneUpdateStrategy implements UpdateStrategy {
     }
 
     @Override
-    public boolean canApply(final IssueWrapper issueWrapper, final ProjectContext projectContext) {
+    public boolean canApply(final IssueWrapper issueWrapper, final ProjectContext projectContext,
+            final int newStatusCode) {
         if (!issueWrapper.getStartDate().isPresent() || !issueWrapper.getDueDate().isPresent()) {
             return false;
         }
