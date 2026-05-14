@@ -23,6 +23,11 @@ public class IssueUpdateOrchestrator {
     private final BacklogClient client;
     private final List<UpdateStrategy> strategies;
 
+    protected IssueUpdateOrchestrator() {
+        this.client = null;
+        this.strategies = null;
+    }
+
     public IssueUpdateOrchestrator(final String apiKey) {
         this.client = new BacklogClientFactory(new BacklogJpConfigure("faber-wi").apiKey(apiKey)).newClient();
         final WorkScheduleHelper workScheduleHelper = new WorkScheduleHelper();
