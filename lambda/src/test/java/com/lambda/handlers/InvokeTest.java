@@ -1,4 +1,4 @@
-package com.lambda;
+package com.lambda.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

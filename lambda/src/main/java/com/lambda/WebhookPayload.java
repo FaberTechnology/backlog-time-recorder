@@ -10,12 +10,12 @@ import com.nulabinc.backlog4j.internal.json.UserJSONImpl;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WebhookPayload {
-    int id;
+    public int id;
     @JsonDeserialize(as = ProjectJSONImpl.class)
     Project project;
     int type;
     @JsonDeserialize(as = Issue.class)
-    Issue content;
+    public Issue content;
     @JsonDeserialize(as = UserJSONImpl.class)
     User createdUser;
     String created;

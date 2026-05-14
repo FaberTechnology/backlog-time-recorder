@@ -1,7 +1,8 @@
-package com.lambda;
+package com.lambda.handlers;
 
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
@@ -9,8 +10,20 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.amazonaws.services.lambda.runtime.logging.LogLevel;
+import com.lambda.WebhookPayload;
+import com.lambda.helpers.MilestoneHelper;
+import com.lambda.helpers.TimeTrackingHelper;
+import com.lambda.helpers.WorkScheduleHelper;
 import com.lambda.models.Issue;
+import com.lambda.strategies.ActualHoursUpdateStrategy;
+import com.lambda.strategies.MilestoneUpdateStrategy;
+import com.lambda.strategies.StartedAtUpdateStrategy;
+import com.lambda.strategies.UpdateStrategy;
+import com.nulabinc.backlog4j.BacklogClient;
+import com.nulabinc.backlog4j.BacklogClientFactory;
 import com.nulabinc.backlog4j.Issue.StatusType;
+import com.nulabinc.backlog4j.conf.BacklogConfigure;
+import com.nulabinc.backlog4j.conf.BacklogJpConfigure;
 import com.nulabinc.backlog4j.internal.json.Jackson;
 
 public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
@@ -33,31 +46,41 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         }
 
         int newStatus = issue.getChanges().stream()
-            .filter(change -> change.getField().equals("status"))
-            .findFirst()
-            .map(change -> Integer.parseInt(change.getNewValue()))
-            .orElse(0);
+                .filter(change -> change.getField().equals("status"))
+                .findFirst()
+                .map(change -> Integer.parseInt(change.getNewValue()))
+                .orElse(0);
         if (newStatus == 0) {
             return returnText("Status did not change", 204);
+        }
+
+        StatusType statusType = StatusType.valueOf(newStatus);
+        if (statusType != StatusType.Closed
+                && statusType != StatusType.InProgress
+                && statusType != StatusType.Open) {
+            return returnText("Unhandled status change", 204);
         }
 
         final String apiKey = System.getenv("BACKLOG_API_KEY");
         if (apiKey == null) {
             throw new RuntimeException("BACKLOG_API_KEY is not set");
         }
-        final IssueUpdater updater = new IssueUpdater(apiKey);
 
-        com.nulabinc.backlog4j.Issue updatedIssue = null;
-        switch (StatusType.valueOf(newStatus)) {
-            case Closed:
-                updatedIssue = updater.setActualHours(issue.getId());
-                break;
-            case InProgress, Open:
-                updatedIssue = updater.setStartedAt(issue.getId());
-                break;
-            default:
-                return returnText("Unhandled status change", 204);
-        }
+        BacklogConfigure configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
+        BacklogClient client = new BacklogClientFactory(configure).newClient();
+
+        WorkScheduleHelper workScheduleHelper = new WorkScheduleHelper();
+        TimeTrackingHelper timeTrackingHelper = new TimeTrackingHelper(workScheduleHelper);
+        MilestoneHelper milestoneHelper = new MilestoneHelper();
+
+        List<UpdateStrategy> strategies = List.of(
+                new ActualHoursUpdateStrategy(timeTrackingHelper),
+                new StartedAtUpdateStrategy(timeTrackingHelper),
+                new MilestoneUpdateStrategy(milestoneHelper)
+        );
+
+        IssueUpdateOrchestrator orchestrator = new IssueUpdateOrchestrator(client, strategies);
+        com.nulabinc.backlog4j.Issue updatedIssue = orchestrator.updateIssue(issue.getId());
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);

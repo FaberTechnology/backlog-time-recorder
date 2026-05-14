@@ -1,4 +1,4 @@
-package com.lambda;
+package com.lambda.handlers;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.CognitoIdentity;
@@ -53,5 +53,4 @@ public class TestContext implements Context {
     public LambdaLogger getLogger() {
         return new TestLogger();
     }
-
 }

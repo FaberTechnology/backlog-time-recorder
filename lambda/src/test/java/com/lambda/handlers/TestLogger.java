@@ -1,4 +1,4 @@
-package com.lambda;
+package com.lambda.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

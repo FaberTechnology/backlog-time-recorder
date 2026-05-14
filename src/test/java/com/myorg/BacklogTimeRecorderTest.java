@@ -25,7 +25,7 @@ public class BacklogTimeRecorderTest {
 
         template.hasResourceProperties("AWS::Lambda::Function", new HashMap<String, Object>() {{
           put("Runtime", "java17");
-          put("Handler", "com.lambda.BacklogTimeRecorder::handleRequest");
+          put("Handler", "com.lambda.handlers.BacklogTimeRecorder::handleRequest");
         }});
     }
 }
