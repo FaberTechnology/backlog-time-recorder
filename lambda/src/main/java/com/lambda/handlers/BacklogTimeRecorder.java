@@ -45,6 +45,30 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("Issue is null", 204);
         }
 
+        final String apiKey = System.getenv("BACKLOG_API_KEY");
+        if (apiKey == null) {
+            throw new RuntimeException("BACKLOG_API_KEY is not set");
+        }
+
+        BacklogConfigure configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
+        BacklogClient client = new BacklogClientFactory(configure).newClient();
+
+        // Check for start date or due date changes
+        boolean hasDateChange = issue.getChanges().stream()
+                .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("limitDate"));
+
+        if (hasDateChange) {
+            try {
+                MilestoneHelper milestoneHelper = new MilestoneHelper();
+                IssueUpdateOrchestrator dateOrchestrator = new IssueUpdateOrchestrator(client,
+                        List.of(new MilestoneUpdateStrategy(milestoneHelper)));
+                dateOrchestrator.updateIssue(issue.getId());
+            } catch (Exception e) {
+                logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
+                        LogLevel.ERROR);
+            }
+        }
+
         int newStatus = issue.getChanges().stream()
                 .filter(change -> change.getField().equals("status"))
                 .findFirst()
@@ -60,14 +84,6 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
                 && statusType != StatusType.Open) {
             return returnText("Unhandled status change", 204);
         }
-
-        final String apiKey = System.getenv("BACKLOG_API_KEY");
-        if (apiKey == null) {
-            throw new RuntimeException("BACKLOG_API_KEY is not set");
-        }
-
-        BacklogConfigure configure = new BacklogJpConfigure("faber-wi").apiKey(apiKey);
-        BacklogClient client = new BacklogClientFactory(configure).newClient();
 
         WorkScheduleHelper workScheduleHelper = new WorkScheduleHelper();
         TimeTrackingHelper timeTrackingHelper = new TimeTrackingHelper(workScheduleHelper);
