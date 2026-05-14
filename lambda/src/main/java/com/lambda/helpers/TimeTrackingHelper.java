@@ -18,7 +18,7 @@ public class TimeTrackingHelper {
         this.workScheduleHelper = workScheduleHelper;
     }
 
-    public Float calculateActualHours(final LocalDateTime createdAt, final String startedAtValue) {
+    public float calculateActualHours(final LocalDateTime createdAt, final String startedAtValue) {
         if (startedAtValue != null && !startedAtValue.isBlank()) {
             try {
                 final String[] parts = startedAtValue.split(";");
