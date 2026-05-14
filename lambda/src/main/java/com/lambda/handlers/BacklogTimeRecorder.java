@@ -37,7 +37,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         logger.log(body, LogLevel.DEBUG);
 
         final WebhookPayload payload = Jackson.fromJsonString(body, WebhookPayload.class);
-        final Issue issue = payload.content;
+        final Issue issue = payload.getContent();
 
         if (issue == null) {
             return returnText("Issue is null", 204);

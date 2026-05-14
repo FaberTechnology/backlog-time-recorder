@@ -19,4 +19,8 @@ public class WebhookPayload {
     @JsonDeserialize(as = UserJSONImpl.class)
     User createdUser;
     String created;
+
+    public Issue getContent() {
+        return content;
+    }
 }
