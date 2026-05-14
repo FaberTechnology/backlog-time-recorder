@@ -50,14 +50,10 @@ public class IssueUpdateOrchestrator {
             }
         }
 
-        if (!hasUpdates(anyApplied)) {
+        if (!anyApplied) {
             return null;
         }
 
         return client.updateIssue(params);
-    }
-
-    private boolean hasUpdates(final boolean anyApplied) {
-        return anyApplied;
     }
 }
