@@ -1,4 +1,4 @@
-package com.lambda;
+package com.lambda.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -8,6 +8,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.amazonaws.services.lambda.runtime.tests.annotations.Event;
+import com.lambda.TestContext;
 
 public class InvokeTest {
     @ParameterizedTest
