@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import java.math.BigDecimal;
+
 import com.nulabinc.backlog4j.CustomField;
 import com.nulabinc.backlog4j.Issue;
 import com.nulabinc.backlog4j.Milestone;
@@ -51,7 +53,8 @@ public class IssueWrapper {
     }
 
     public Optional<Float> getActualHours() {
-        return Optional.ofNullable(rawIssue.getActualHours());
+        final BigDecimal value = rawIssue.getActualHours();
+        return value == null ? Optional.empty() : Optional.of(value.floatValue());
     }
 
     public LocalDateTime getCreatedAt() {
