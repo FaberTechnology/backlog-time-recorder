@@ -11,14 +11,15 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import com.lambda.WebhookPayload;
 import com.lambda.models.Issue;
+import com.nulabinc.backlog4j.Issue.StatusType;
 import com.nulabinc.backlog4j.internal.json.Jackson;
 
 public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 
-    private IssueUpdateOrchestrator orchestrator;
+    private IssueUpdater updater;
 
-    BacklogTimeRecorder(final IssueUpdateOrchestrator orchestrator) {
-        this.orchestrator = orchestrator;
+    BacklogTimeRecorder(final IssueUpdater updater) {
+        this.updater = updater;
     }
 
     public BacklogTimeRecorder() {
@@ -41,13 +42,28 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText("Issue is null", 204);
         }
 
+        final boolean hasDateChange = issue.getChanges().stream()
+                .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("limitDate"));
+
         final int newStatus = issue.getChanges().stream()
                 .filter(change -> change.getField().equals("status"))
                 .findFirst()
                 .map(change -> Integer.parseInt(change.getNewValue()))
                 .orElse(0);
 
-        final com.nulabinc.backlog4j.Issue updatedIssue = getOrchestrator().updateIssue(issue.getId(), newStatus);
+        if (newStatus == 0 || !isHandledStatus(newStatus)) {
+            if (hasDateChange) {
+                try {
+                    getUpdater().updateIssue(issue.getId(), 0);
+                } catch (Exception e) {
+                    logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
+                            LogLevel.ERROR);
+                }
+            }
+            return returnText(newStatus == 0 ? "Status did not change" : "Unhandled status change", 204);
+        }
+
+        final com.nulabinc.backlog4j.Issue updatedIssue = getUpdater().updateIssue(issue.getId(), newStatus);
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);
@@ -56,15 +72,20 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         return returnText(issue.getSummary(), 202);
     }
 
-    private IssueUpdateOrchestrator getOrchestrator() {
-        if (orchestrator == null) {
+    private boolean isHandledStatus(final int statusCode) {
+        final StatusType statusType = StatusType.valueOf(statusCode);
+        return statusType == StatusType.Closed || statusType == StatusType.InProgress || statusType == StatusType.Open;
+    }
+
+    private IssueUpdater getUpdater() {
+        if (updater == null) {
             final String apiKey = System.getenv("BACKLOG_API_KEY");
             if (apiKey == null) {
                 throw new RuntimeException("BACKLOG_API_KEY is not set");
             }
-            orchestrator = new IssueUpdateOrchestrator(apiKey);
+            updater = new IssueUpdateOrchestrator(apiKey);
         }
-        return orchestrator;
+        return updater;
     }
 
     private APIGatewayV2HTTPResponse returnText(final String text, final int status) {

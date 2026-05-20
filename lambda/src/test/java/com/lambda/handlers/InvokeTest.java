@@ -12,19 +12,14 @@ import com.lambda.TestContext;
 
 public class InvokeTest {
 
-    private static final IssueUpdateOrchestrator NO_OP_ORCHESTRATOR = new IssueUpdateOrchestrator() {
-        @Override
-        public com.nulabinc.backlog4j.Issue updateIssue(final int issueId, final int newStatusCode) {
-            return null;
-        }
-    };
+    private static final IssueUpdater NO_OP_UPDATER = (issueId, newStatusCode) -> null;
 
     @ParameterizedTest
     @Event(value = "events/issue.json", type = APIGatewayV2HTTPEvent.class)
     void testApiGatewayV2(final APIGatewayV2HTTPEvent event) {
         final Context context = new TestContext();
-        final BacklogTimeRecorder handler = new BacklogTimeRecorder(NO_OP_ORCHESTRATOR);
+        final BacklogTimeRecorder handler = new BacklogTimeRecorder(NO_OP_UPDATER);
         final APIGatewayV2HTTPResponse response = handler.handleRequest(event, context);
-        assertEquals("No issue to update", response.getBody());
+        assertEquals("Unhandled status change", response.getBody());
     }
 }
