@@ -18,15 +18,10 @@ import com.nulabinc.backlog4j.Issue;
 import com.nulabinc.backlog4j.api.option.UpdateIssueParams;
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure;
 
-public class IssueUpdateOrchestrator {
+public class IssueUpdateOrchestrator implements IssueUpdater {
 
     private final BacklogClient client;
     private final List<UpdateStrategy> strategies;
-
-    protected IssueUpdateOrchestrator() {
-        this.client = null;
-        this.strategies = null;
-    }
 
     public IssueUpdateOrchestrator(final String apiKey) {
         this.client = new BacklogClientFactory(new BacklogJpConfigure("faber-wi").apiKey(apiKey)).newClient();
@@ -39,11 +34,12 @@ public class IssueUpdateOrchestrator {
                 new StartedAtUpdateStrategy(timeTrackingHelper));
     }
 
+    @Override
     public Issue updateIssue(final int issueId, final int newStatusCode) {
         final Issue rawIssue = client.getIssue(issueId);
         final IssueWrapper issueWrapper = new IssueWrapper(rawIssue, newStatusCode);
         final ProjectContext projectContext = new ProjectContext(
-                rawIssue.getProjectId(), client.getMilestones(rawIssue.getProjectId()));
+                rawIssue.getProjectId(), () -> client.getMilestones(rawIssue.getProjectId()));
 
         final UpdateIssueParams params = new UpdateIssueParams(issueId);
         boolean anyApplied = false;

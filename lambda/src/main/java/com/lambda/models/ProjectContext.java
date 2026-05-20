@@ -1,17 +1,19 @@
 package com.lambda.models;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.nulabinc.backlog4j.Milestone;
 
 public class ProjectContext {
 
     private final long projectId;
-    private final List<Milestone> milestones;
+    private final Supplier<List<Milestone>> milestonesSupplier;
+    private List<Milestone> cachedMilestones;
 
-    public ProjectContext(final long projectId, final List<Milestone> milestones) {
+    public ProjectContext(final long projectId, final Supplier<List<Milestone>> milestonesSupplier) {
         this.projectId = projectId;
-        this.milestones = milestones;
+        this.milestonesSupplier = milestonesSupplier;
     }
 
     public long projectId() {
@@ -19,6 +21,9 @@ public class ProjectContext {
     }
 
     public List<Milestone> milestones() {
-        return milestones;
+        if (cachedMilestones == null) {
+            cachedMilestones = milestonesSupplier.get();
+        }
+        return cachedMilestones;
     }
 }
