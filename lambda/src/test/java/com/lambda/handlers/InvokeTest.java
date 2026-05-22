@@ -12,7 +12,7 @@ import com.lambda.TestContext;
 
 public class InvokeTest {
 
-    private static final IssueUpdater NO_OP_UPDATER = (issueId, newStatusCode) -> null;
+    private static final IssueUpdater NO_OP_UPDATER = (issueId, newStatusCode, hasDateChange) -> null;
 
     @ParameterizedTest
     @Event(value = "events/issue.json", type = APIGatewayV2HTTPEvent.class)

@@ -20,10 +20,12 @@ public class IssueWrapper {
 
     private final Issue rawIssue;
     private final int newStatusCode;
+    private final boolean dateChanged;
 
-    public IssueWrapper(final Issue rawIssue, final int newStatusCode) {
+    public IssueWrapper(final Issue rawIssue, final int newStatusCode, final boolean dateChanged) {
         this.rawIssue = rawIssue;
         this.newStatusCode = newStatusCode;
+        this.dateChanged = dateChanged;
     }
 
     public long getId() {
@@ -63,6 +65,10 @@ public class IssueWrapper {
 
     public int getNewStatusCode() {
         return newStatusCode;
+    }
+
+    public boolean isDateChanged() {
+        return dateChanged;
     }
 
     public Optional<CustomField> getCustomField(final String name) {
