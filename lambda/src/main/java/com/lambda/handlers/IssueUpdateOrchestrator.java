@@ -35,9 +35,9 @@ public class IssueUpdateOrchestrator implements IssueUpdater {
     }
 
     @Override
-    public Issue updateIssue(final int issueId, final int newStatusCode) {
+    public Issue updateIssue(final int issueId, final int newStatusCode, final boolean hasDateChange) {
         final Issue rawIssue = client.getIssue(issueId);
-        final IssueWrapper issueWrapper = new IssueWrapper(rawIssue, newStatusCode);
+        final IssueWrapper issueWrapper = new IssueWrapper(rawIssue, newStatusCode, hasDateChange);
         final ProjectContext projectContext = new ProjectContext(
                 rawIssue.getProjectId(), () -> client.getMilestones(rawIssue.getProjectId()));
 

@@ -54,7 +54,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         if (newStatus == 0 || !isHandledStatus(newStatus)) {
             if (hasDateChange) {
                 try {
-                    getUpdater().updateIssue(issue.getId(), 0);
+                    getUpdater().updateIssue(issue.getId(), 0, true);
                 } catch (Exception e) {
                     logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
                             LogLevel.ERROR);
@@ -63,7 +63,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
             return returnText(newStatus == 0 ? "Status did not change" : "Unhandled status change", 204);
         }
 
-        final com.nulabinc.backlog4j.Issue updatedIssue = getUpdater().updateIssue(issue.getId(), newStatus);
+        final com.nulabinc.backlog4j.Issue updatedIssue = getUpdater().updateIssue(issue.getId(), newStatus, hasDateChange);
 
         if (updatedIssue == null) {
             return returnText("No issue to update", 200);
