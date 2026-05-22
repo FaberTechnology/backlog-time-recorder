@@ -51,25 +51,23 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
                 .map(change -> Integer.parseInt(change.getNewValue()))
                 .orElse(0);
 
-        if (newStatus == 0 || !isHandledStatus(newStatus)) {
-            if (hasDateChange) {
-                try {
-                    getUpdater().updateIssue(issue.getId(), 0, true);
-                } catch (Exception e) {
-                    logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
-                            LogLevel.ERROR);
-                }
+        if (newStatus != 0 && isHandledStatus(newStatus)) {
+            final com.nulabinc.backlog4j.Issue updatedIssue = getUpdater().updateIssue(issue.getId(), newStatus, hasDateChange);
+            if (updatedIssue == null) {
+                return returnText("No issue to update", 200);
             }
-            return returnText(newStatus == 0 ? "Status did not change" : "Unhandled status change", 204);
+            return returnText(issue.getSummary(), 202);
         }
 
-        final com.nulabinc.backlog4j.Issue updatedIssue = getUpdater().updateIssue(issue.getId(), newStatus, hasDateChange);
-
-        if (updatedIssue == null) {
-            return returnText("No issue to update", 200);
+        if (hasDateChange) {
+            try {
+                getUpdater().updateIssue(issue.getId(), 0, true);
+            } catch (Exception e) {
+                logger.log("Failed to update milestones for issue " + issue.getId() + ": " + e.getMessage(),
+                        LogLevel.ERROR);
+            }
         }
-
-        return returnText(issue.getSummary(), 202);
+        return returnText(newStatus == 0 ? "Status did not change" : "Unhandled status change", 204);
     }
 
     private boolean isHandledStatus(final int statusCode) {
