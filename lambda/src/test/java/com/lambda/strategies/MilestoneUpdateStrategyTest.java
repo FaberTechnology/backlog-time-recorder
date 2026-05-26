@@ -106,6 +106,18 @@ public class MilestoneUpdateStrategyTest {
     }
 
     @Test
+    public void canApply_FalseWhenStartAfterDue() {
+        final Milestone apr = milestone(1L, "2026-Apr");
+        final Milestone may = milestone(2L, "2026-May");
+
+        final IssueWrapper issue = issueWith(
+                "2026-05-20", "2026-04-10", Arrays.asList(apr, may));
+        final ProjectContext ctx = projectContextWith(Arrays.asList(apr, may));
+
+        assertFalse(strategy.canApply(issue, ctx));
+    }
+
+    @Test
     public void canApply_FalseWhenDatesMissing() {
         final IssueWrapper issue = issueWith(null, null, new ArrayList<>());
         final ProjectContext ctx = projectContextWith(new ArrayList<>());

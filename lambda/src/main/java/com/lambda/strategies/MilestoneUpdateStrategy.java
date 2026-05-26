@@ -1,5 +1,6 @@
 package com.lambda.strategies;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,8 +30,13 @@ public class MilestoneUpdateStrategy implements UpdateStrategy {
             return false;
         }
 
-        final Set<String> requiredNames = milestoneHelper.calculateRequiredMilestoneNames(
-                issueWrapper.getStartDate().get(), issueWrapper.getDueDate().get());
+        final LocalDate start = issueWrapper.getStartDate().get();
+        final LocalDate due = issueWrapper.getDueDate().get();
+        if (start.isAfter(due)) {
+            return false;
+        }
+
+        final Set<String> requiredNames = milestoneHelper.calculateRequiredMilestoneNames(start, due);
 
         final List<Milestone> current = issueWrapper.getIssueMilestones();
         final List<Milestone> kept = new ArrayList<>();
