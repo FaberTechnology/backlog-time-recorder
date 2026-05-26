@@ -106,6 +106,25 @@ public class MilestoneUpdateStrategyTest {
     }
 
     @Test
+    public void canApply_DoesNotCreateMilestone() {
+        final Milestone may = milestone(2L, "2026-May");
+        final List<String> created = new ArrayList<>();
+
+        final IssueWrapper issue = issueWith(
+                "2026-05-10", "2026-06-20", Arrays.asList(may));
+        final ProjectContext ctx = projectContextWithCreator(
+                new ArrayList<>(Arrays.asList(may)),
+                name -> {
+                    created.add(name);
+                    return milestone(999L, name);
+                });
+
+        assertTrue(strategy.canApply(issue, ctx));
+
+        assertTrue(created.isEmpty(), "canApply must not trigger milestone creation");
+    }
+
+    @Test
     public void canApply_FalseWhenStartAfterDue() {
         final Milestone apr = milestone(1L, "2026-Apr");
         final Milestone may = milestone(2L, "2026-May");
