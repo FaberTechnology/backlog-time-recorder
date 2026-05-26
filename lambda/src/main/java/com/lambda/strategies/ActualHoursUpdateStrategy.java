@@ -22,7 +22,10 @@ public class ActualHoursUpdateStrategy implements UpdateStrategy {
 
     @Override
     public boolean canApply(final IssueWrapper issueWrapper, final ProjectContext projectContext) {
-        return issueWrapper.getNewStatusCode() == StatusType.Closed.getIntValue();
+        if (issueWrapper.getNewStatusCode() != StatusType.Closed.getIntValue()) {
+            return false;
+        }
+        return !issueWrapper.getActualHours().isPresent();
     }
 
     @Override
