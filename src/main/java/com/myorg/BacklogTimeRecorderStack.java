@@ -32,7 +32,7 @@ public class BacklogTimeRecorderStack extends Stack {
         final Function backlogTimeRecorder = Function.Builder.create(this, "BacklogTimeRecorder")
                 .runtime(Runtime.JAVA_17)
                 .code(Code.fromAsset("lambda/target/backlog-time-recorder-0.1.jar"))
-                .handler("com.lambda.BacklogTimeRecorder::handleRequest")
+                .handler("com.lambda.handlers.BacklogTimeRecorder::handleRequest")
                 .environment(env)
                 .timeout(Duration.seconds(30))
                 .logRetention(RetentionDays.ONE_MONTH)
