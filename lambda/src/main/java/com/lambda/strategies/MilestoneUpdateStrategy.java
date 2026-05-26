@@ -15,7 +15,8 @@ import com.nulabinc.backlog4j.api.option.UpdateIssueParams;
 public class MilestoneUpdateStrategy implements UpdateStrategy {
 
     private final MilestoneHelper milestoneHelper;
-    private List<Long> nextMilestoneIds;
+    private List<Milestone> keptMilestones;
+    private List<String> milestoneNamesToAdd;
 
     public MilestoneUpdateStrategy(final MilestoneHelper milestoneHelper) {
         this.milestoneHelper = milestoneHelper;
@@ -55,10 +56,10 @@ public class MilestoneUpdateStrategy implements UpdateStrategy {
             }
         }
 
-        final List<Milestone> toAdd = new ArrayList<>();
+        final List<String> toAdd = new ArrayList<>();
         for (final String name : requiredNames) {
             if (!keptMonthlyNames.contains(name)) {
-                toAdd.add(projectContext.getOrCreateMilestone(name));
+                toAdd.add(name);
             }
         }
 
@@ -66,20 +67,21 @@ public class MilestoneUpdateStrategy implements UpdateStrategy {
             return false;
         }
 
-        final List<Long> next = new ArrayList<>();
-        for (final Milestone m : kept) {
-            next.add(m.getId());
-        }
-        for (final Milestone m : toAdd) {
-            next.add(m.getId());
-        }
-        nextMilestoneIds = next;
+        keptMilestones = kept;
+        milestoneNamesToAdd = toAdd;
         return true;
     }
 
     @Override
     public void apply(final IssueWrapper issueWrapper, final ProjectContext projectContext,
             final UpdateIssueParams params) {
-        params.milestoneIds(nextMilestoneIds);
+        final List<Long> next = new ArrayList<>();
+        for (final Milestone m : keptMilestones) {
+            next.add(m.getId());
+        }
+        for (final String name : milestoneNamesToAdd) {
+            next.add(projectContext.getOrCreateMilestone(name).getId());
+        }
+        params.milestoneIds(next);
     }
 }
