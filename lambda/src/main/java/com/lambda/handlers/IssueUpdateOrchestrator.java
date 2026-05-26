@@ -15,19 +15,21 @@ import com.lambda.strategies.UpdateStrategy;
 import com.nulabinc.backlog4j.BacklogClient;
 import com.nulabinc.backlog4j.BacklogClientFactory;
 import com.nulabinc.backlog4j.Issue;
+import com.nulabinc.backlog4j.api.option.AddMilestoneParams;
 import com.nulabinc.backlog4j.api.option.UpdateIssueParams;
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure;
 
 public class IssueUpdateOrchestrator implements IssueUpdater {
 
     private final BacklogClient client;
+    private final MilestoneHelper milestoneHelper;
     private final List<UpdateStrategy> strategies;
 
     public IssueUpdateOrchestrator(final String apiKey) {
         this.client = new BacklogClientFactory(new BacklogJpConfigure("faber-wi").apiKey(apiKey)).newClient();
         final WorkScheduleHelper workScheduleHelper = new WorkScheduleHelper();
         final TimeTrackingHelper timeTrackingHelper = new TimeTrackingHelper(workScheduleHelper);
-        final MilestoneHelper milestoneHelper = new MilestoneHelper();
+        this.milestoneHelper = new MilestoneHelper();
         this.strategies = Arrays.asList(
                 new MilestoneUpdateStrategy(milestoneHelper),
                 new ActualHoursUpdateStrategy(timeTrackingHelper),
@@ -38,8 +40,13 @@ public class IssueUpdateOrchestrator implements IssueUpdater {
     public Issue updateIssue(final int issueId, final int newStatusCode, final boolean hasDateChange) {
         final Issue rawIssue = client.getIssue(issueId);
         final IssueWrapper issueWrapper = new IssueWrapper(rawIssue, newStatusCode, hasDateChange);
+        final long projectId = rawIssue.getProjectId();
         final ProjectContext projectContext = new ProjectContext(
-                rawIssue.getProjectId(), () -> client.getMilestones(rawIssue.getProjectId()));
+                projectId,
+                () -> client.getMilestones(projectId),
+                name -> client.addMilestone(new AddMilestoneParams(projectId, name)
+                        .startDate(milestoneHelper.monthStartDate(name).toString())
+                        .releaseDueDate(milestoneHelper.monthEndDate(name).toString())));
 
         final UpdateIssueParams params = new UpdateIssueParams(issueId);
         boolean anyApplied = false;
