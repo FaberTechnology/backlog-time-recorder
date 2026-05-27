@@ -42,6 +42,10 @@ public class IssueWrapper {
                 .collect(Collectors.toList());
     }
 
+    public List<Milestone> getIssueMilestones() {
+        return rawIssue.getMilestone();
+    }
+
     public Optional<LocalDate> getStartDate() {
         final Date date = rawIssue.getStartDate();
         if (date == null) return Optional.empty();
