@@ -11,3 +11,5 @@ target
 .cdk.staging
 cdk.out
 
+# Local AWS session helper (contains account-specific identifiers; keep out of VCS)
+ssm.sh
