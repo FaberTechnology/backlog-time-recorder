@@ -237,8 +237,7 @@ technology table (Java 17, AWS CDK 2.114.0, backlog4j 2.6.0, AWS Lambda).
 
 ## Architecture Decisions
 
-No ADRs have been recorded yet for this project. See `docs/ADR/` once it is
-scaffolded (`/faber-docs:sync --apply`).
+No ADRs have been recorded yet for this project. See `docs/ADR/` once it exists.
 
 ## Constraints & Trade-offs
 
@@ -261,5 +260,4 @@ scaffolded (`/faber-docs:sync --apply`).
 ## References
 
 - [Deployment Guide](../guides/deployment.md)
-- [Setup Guide](../guides/setup-local-environment.md)
 - [Project Overview](../overview/README.md)

@@ -27,8 +27,7 @@ Actions.
       used by [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)
 - [ ] `BACKLOG_API_KEY` stored as a repository secret
 - [ ] Code merged to `master` (or, for a manual local deploy, the CDK CLI
-      and AWS credentials on your machine — see the
-      [Setup Guide](setup-local-environment.md))
+      and AWS credentials on your machine)
 
 ## Environments
 
@@ -71,8 +70,7 @@ graph LR
 
 ## Manual Deployment
 
-To deploy from your own machine (see the
-[Setup Guide](setup-local-environment.md) for prerequisites):
+To deploy from your own machine:
 
 ```bash
 export BACKLOG_API_KEY=your-backlog-api-key

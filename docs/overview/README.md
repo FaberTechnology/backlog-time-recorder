@@ -120,7 +120,6 @@ and Masayuki Sugahara.
 ## Resources
 
 - [System Architecture](../architecture/system-architecture.md)
-- [Setup Guide](../guides/setup-local-environment.md)
 - [Deployment Guide](../guides/deployment.md)
 - <!-- TODO: add links to the Backlog project/space and any Slack channel used for this service -->
 
@@ -130,9 +129,7 @@ For developers joining this project:
 
 1. Read the [README.md](../../README.md) in the root directory
 2. Review the [System Architecture](../architecture/system-architecture.md)
-3. Follow the [Setup Guide](../guides/setup-local-environment.md)
-4. Check [CONTRIBUTING.md](../../CONTRIBUTING.md) once it exists — run
-   `/faber-docs:sync --apply` to scaffold it
+3. Check [CONTRIBUTING.md](../../CONTRIBUTING.md) once it exists
 
 ## FAQ
 

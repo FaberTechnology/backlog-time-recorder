@@ -142,13 +142,7 @@ All project documentation is in the [docs/](docs/) directory:
 
 - [Overview](docs/overview/) -- project context and goals
 - [Architecture](docs/architecture/) -- system design and diagrams
-- [ADR](docs/ADR/) -- Architecture Decision Records
-- [Specs](docs/specs/) -- feature specs with requirements and acceptance criteria
-- [Guides](docs/guides/) -- how-to guides for common tasks
-- [Reference](docs/reference/) -- configuration, schemas, endpoints
-- [API](docs/api/) -- API specifications
-- [Runbooks](docs/runbooks/) -- operational playbooks
-- [Troubleshooting](docs/troubleshooting/) -- known issues and fixes
+- [Guides](docs/guides/) -- how-to guides (currently: [deployment](docs/guides/deployment.md))
 
 ## Contributing
 
