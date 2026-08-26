@@ -28,7 +28,6 @@ public class BacklogTimeRecorderStack extends Stack {
                 put("BACKLOG_API_KEY", System.getenv("BACKLOG_API_KEY"));
                 putIfSet("PRODUCT_OWNER_USER_IDS");
                 putIfSet("SETTING_PRIORITY_STATUS_ID");
-                putIfSet("PBI_ISSUE_TYPE_IDS");
             }
 
             private void putIfSet(final String name) {

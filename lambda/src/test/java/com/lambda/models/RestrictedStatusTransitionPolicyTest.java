@@ -16,11 +16,11 @@ public class RestrictedStatusTransitionPolicyTest {
     private static final long PRODUCT_OWNER_ID = 399389L;
     private static final long OTHER_USER_ID = 111111L;
     private static final int SETTING_PRIORITY_STATUS_ID = 10001;
-    private static final long PBI_ISSUE_TYPE_ID = 12345L;
-    private static final long BUG_ISSUE_TYPE_ID = 67890L;
+    private static final String PBI_ISSUE_TYPE_NAME = "PBI";
+    private static final String BUG_ISSUE_TYPE_NAME = "Bug";
 
     private final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
-            Collections.singleton(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID, Collections.singleton(PBI_ISSUE_TYPE_ID));
+            Collections.singleton(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID);
 
     @Test
     public void isRestrictedTransition_openToSettingPriority_returnsTrue() {
@@ -46,7 +46,7 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isRestrictedTransition_noProductOwnersConfigured_returnsFalse() {
         final RestrictedStatusTransitionPolicy disabled = new RestrictedStatusTransitionPolicy(
-                Collections.emptySet(), SETTING_PRIORITY_STATUS_ID, Collections.singleton(PBI_ISSUE_TYPE_ID));
+                Collections.emptySet(), SETTING_PRIORITY_STATUS_ID);
 
         assertFalse(disabled.isRestrictedTransition(StatusType.Open.getIntValue(), StatusType.Closed.getIntValue()));
     }
@@ -64,28 +64,29 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isAuthorized_multipleProductOwners_matchesAny() {
         final RestrictedStatusTransitionPolicy multiOwnerPolicy = new RestrictedStatusTransitionPolicy(
-                Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), SETTING_PRIORITY_STATUS_ID, Collections.singleton(PBI_ISSUE_TYPE_ID));
+                Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), SETTING_PRIORITY_STATUS_ID);
 
         assertTrue(multiOwnerPolicy.isAuthorized(OTHER_USER_ID));
     }
 
     @Test
-    public void isPbiIssueType_pbiType_returnsTrue() {
-        assertTrue(policy.isPbiIssueType(PBI_ISSUE_TYPE_ID));
+    public void isPbiIssueType_pbiName_returnsTrue() {
+        assertTrue(policy.isPbiIssueType(PBI_ISSUE_TYPE_NAME));
     }
 
     @Test
-    public void isPbiIssueType_nonPbiType_returnsFalse() {
-        assertFalse(policy.isPbiIssueType(BUG_ISSUE_TYPE_ID));
+    public void isPbiIssueType_nonPbiName_returnsFalse() {
+        assertFalse(policy.isPbiIssueType(BUG_ISSUE_TYPE_NAME));
     }
 
     @Test
-    public void isPbiIssueType_multiplePbiTypes_matchesAny() {
-        final RestrictedStatusTransitionPolicy multiTypePolicy = new RestrictedStatusTransitionPolicy(
-                Collections.singleton(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID,
-                Set.of(PBI_ISSUE_TYPE_ID, BUG_ISSUE_TYPE_ID));
+    public void isPbiIssueType_caseMismatch_returnsFalse() {
+        assertFalse(policy.isPbiIssueType("pbi"));
+    }
 
-        assertTrue(multiTypePolicy.isPbiIssueType(BUG_ISSUE_TYPE_ID));
+    @Test
+    public void isPbiIssueType_null_returnsFalse() {
+        assertFalse(policy.isPbiIssueType(null));
     }
 
     @Test

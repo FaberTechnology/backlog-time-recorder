@@ -9,29 +9,23 @@ import com.nulabinc.backlog4j.Issue.StatusType;
 
 public class RestrictedStatusTransitionPolicy {
 
+    private static final String PBI_ISSUE_TYPE_NAME = "PBI";
+
     private final Set<Long> productOwnerUserIds;
     private final int settingPriorityStatusId;
-    private final Set<Long> pbiIssueTypeIds;
 
-    public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds, final int settingPriorityStatusId,
-            final Set<Long> pbiIssueTypeIds) {
+    public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds, final int settingPriorityStatusId) {
         this.productOwnerUserIds = productOwnerUserIds;
         this.settingPriorityStatusId = settingPriorityStatusId;
-        this.pbiIssueTypeIds = pbiIssueTypeIds;
     }
 
     public static RestrictedStatusTransitionPolicy fromEnv() {
         return new RestrictedStatusTransitionPolicy(
-                parseIdSet(System.getenv("PRODUCT_OWNER_USER_IDS")),
-                parseStatusId(System.getenv("SETTING_PRIORITY_STATUS_ID")),
-                parseIdSet(System.getenv("PBI_ISSUE_TYPE_IDS")));
+                parseUserIds(System.getenv("PRODUCT_OWNER_USER_IDS")),
+                parseStatusId(System.getenv("SETTING_PRIORITY_STATUS_ID")));
     }
 
     static Set<Long> parseUserIds(final String csv) {
-        return parseIdSet(csv);
-    }
-
-    static Set<Long> parseIdSet(final String csv) {
         if (csv == null || csv.isBlank()) {
             return Collections.emptySet();
         }
@@ -63,7 +57,7 @@ public class RestrictedStatusTransitionPolicy {
         return productOwnerUserIds.contains(actorUserId);
     }
 
-    public boolean isPbiIssueType(final long issueTypeId) {
-        return pbiIssueTypeIds.contains(issueTypeId);
+    public boolean isPbiIssueType(final String issueTypeName) {
+        return PBI_ISSUE_TYPE_NAME.equals(issueTypeName);
     }
 }

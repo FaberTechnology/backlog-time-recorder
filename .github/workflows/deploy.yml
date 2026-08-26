@@ -40,7 +40,6 @@ jobs:
           BACKLOG_API_KEY: ${{ secrets.BACKLOG_API_KEY }}
           PRODUCT_OWNER_USER_IDS: ${{ secrets.PRODUCT_OWNER_USER_IDS }}
           SETTING_PRIORITY_STATUS_ID: ${{ secrets.SETTING_PRIORITY_STATUS_ID }}
-          PBI_ISSUE_TYPE_IDS: ${{ secrets.PBI_ISSUE_TYPE_IDS }}
 
       - name: Deploy
         run: cdk deploy --require-approval never
@@ -48,4 +47,3 @@ jobs:
           BACKLOG_API_KEY: ${{ secrets.BACKLOG_API_KEY }}
           PRODUCT_OWNER_USER_IDS: ${{ secrets.PRODUCT_OWNER_USER_IDS }}
           SETTING_PRIORITY_STATUS_ID: ${{ secrets.SETTING_PRIORITY_STATUS_ID }}
-          PBI_ISSUE_TYPE_IDS: ${{ secrets.PBI_ISSUE_TYPE_IDS }}

@@ -18,8 +18,8 @@ public class StatusChangeNotificationTest {
     private static final long PRODUCT_OWNER_ID = 100000L;
     private static final long NON_PRODUCT_OWNER_ID = 999999L;
     private static final int SETTING_PRIORITY_STATUS_ID = 10001;
-    private static final long PBI_ISSUE_TYPE_ID = 12345L;
-    private static final long BUG_ISSUE_TYPE_ID = 67890L;
+    private static final String PBI_ISSUE_TYPE_NAME = "PBI";
+    private static final String BUG_ISSUE_TYPE_NAME = "Bug";
     private static final int STATUS_OPEN = 1;
     private static final int STATUS_IN_PROGRESS = 2;
     private static final int STATUS_CLOSED = 4;
@@ -32,7 +32,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_ID, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertEquals(1, notifier.calls.size());
@@ -48,7 +48,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_ID, STATUS_OPEN, STATUS_CLOSED, PRODUCT_OWNER_ID)),
+                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertTrue(notifier.calls.isEmpty());
@@ -60,7 +60,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_ID, STATUS_OPEN, SETTING_PRIORITY_STATUS_ID, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, SETTING_PRIORITY_STATUS_ID, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertEquals(1, notifier.calls.size());
@@ -72,7 +72,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_ID, STATUS_OPEN, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertTrue(notifier.calls.isEmpty());
@@ -84,7 +84,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(BUG_ISSUE_TYPE_ID, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(BUG_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertTrue(notifier.calls.isEmpty());
@@ -92,7 +92,7 @@ public class StatusChangeNotificationTest {
 
     private static BacklogTimeRecorder handlerFor(final StatusChangeNotifier notifier) {
         final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
-                Set.of(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID, Set.of(PBI_ISSUE_TYPE_ID));
+                Set.of(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID);
         return new BacklogTimeRecorder(NO_OP_UPDATER, notifier, policy);
     }
 
@@ -103,14 +103,14 @@ public class StatusChangeNotificationTest {
         return event;
     }
 
-    private static String statusChangeBody(final long issueTypeId, final int oldStatus, final int newStatus,
+    private static String statusChangeBody(final String issueTypeName, final int oldStatus, final int newStatus,
             final long createdUserId) {
         return "{"
                 + "\"id\":1,"
                 + "\"content\":{"
                 + "\"id\":200000001,"
                 + "\"summary\":\"PBI test issue\","
-                + "\"issueType\":{\"id\":" + issueTypeId + ",\"name\":\"Test Type\"},"
+                + "\"issueType\":{\"id\":12345,\"name\":\"" + issueTypeName + "\"},"
                 + "\"changes\":[{\"field\":\"status\",\"new_value\":\"" + newStatus + "\",\"old_value\":\""
                 + oldStatus + "\",\"type\":\"standard\"}]"
                 + "},"

@@ -75,11 +75,11 @@ Set the `BACKLOG_API_KEY` environment variable to a Backlog API key for the
 `faber-wi` space. It is required both to deploy (the CDK stack injects it into
 the Lambda's environment) and to run the Lambda's tests/build locally.
 
-Optionally, set `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_ID`, and
-`PBI_ISSUE_TYPE_IDS` to enable the PBI status-transition check (Open ->
-Setting Priority, or any status -> Closed, requires a Product Owner). This
-check only applies to issues whose type is listed in `PBI_ISSUE_TYPE_IDS`.
-See the Configuration table below.
+Optionally, set `PRODUCT_OWNER_USER_IDS` and `SETTING_PRIORITY_STATUS_ID` to
+enable the PBI status-transition check (Open -> Setting Priority, or any
+status -> Closed, requires a Product Owner). This check only applies to
+issues whose Backlog issue type name is exactly "PBI" (hardcoded). See the
+Configuration table below.
 
 ### 3. Run the application
 
@@ -127,7 +127,6 @@ No linter or static analysis tool is currently configured for this project.
 | `BACKLOG_API_KEY`             | API key for the `faber-wi` Backlog space, used by both the deployed Lambda and the CDK/Maven build | Yes      |
 | `PRODUCT_OWNER_USER_IDS`      | Comma-separated Backlog user IDs allowed to move a PBI from Open to Setting Priority, or to Closed. If unset, the status-transition check is disabled | No       |
 | `SETTING_PRIORITY_STATUS_ID`  | Numeric Backlog status ID of the project's custom "Setting Priority" status | No (required only to enforce the Open -> Setting Priority rule) |
-| `PBI_ISSUE_TYPE_IDS`          | Comma-separated Backlog issueType IDs considered PBI. The status-transition check only applies to issues of these types; if unset, the check is disabled | No (required to enable the status-transition check) |
 
 ## Architecture
 
