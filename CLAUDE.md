@@ -49,6 +49,10 @@ Deployment is automated via [.github/workflows/deploy.yml](.github/workflows/dep
 `master`: it builds the `lambda/` module with `BACKLOG_API_KEY` injected, then runs `cdk deploy`. There is
 no separate staging environment — pushing to `master` deploys to production.
 
+See [docs/guides/deployment.md](docs/guides/deployment.md) for manual-deploy steps, rollback, and
+troubleshooting; [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md) for a
+fuller write-up of the same architecture described below.
+
 ## Architecture (lambda module)
 
 Request flow: `BacklogTimeRecorder` (the Lambda `RequestHandler`) → `IssueUpdateOrchestrator` → a list of
@@ -96,6 +100,20 @@ Request flow: `BacklogTimeRecorder` (the Lambda `RequestHandler`) → `IssueUpda
 
 Status codes referenced throughout (`Issue.StatusType` from `backlog4j`): the handler only reacts to Open,
 InProgress, and Closed — other custom workflow statuses are ignored.
+
+## Gotchas
+
+- The Lambda Function URL has `FunctionUrlAuthType.NONE` — it's publicly reachable over HTTPS with no
+  signature or secret verification of the caller. Security relies solely on the URL being unguessable.
+- The Backlog space name (`"faber-wi"`) is hardcoded in `IssueUpdateOrchestrator`'s `BacklogJpConfigure`
+  call, not configurable via env var.
+- If a date-change-only webhook (no status change) fails inside `updateIssue`,
+  `BacklogTimeRecorder.handleRequest` catches the exception, logs it at `ERROR`, and still returns a
+  success-range HTTP response — Backlog never sees a delivery failure, so failures are only visible in
+  CloudWatch Logs.
+- `BACKLOG_API_KEY` is required to deploy (and to build/run the Lambda for real), but **not** to run
+  `mvn test` — the test suite invokes `BacklogTimeRecorder` via its package-private constructor with a
+  no-op `IssueUpdater` fake, so no real API key or network call is involved.
 
 ## Testing conventions
 
