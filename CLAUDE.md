@@ -9,7 +9,7 @@ webhooks and automatically applies bookkeeping updates to the issue: monthly mil
 start/due dates, actual-hours tracking based on a "Started at" custom field, and started-at timestamps
 when work begins. The infrastructure (a single Lambda behind a Function URL) is defined with AWS CDK in Java.
 
-The repo has two independent Maven modules:
+The repo contains two standalone Maven projects:
 
 - **Root (`/`)** — the CDK app (`com.myorg`) that defines and deploys the `BacklogTimeRecorderStack`.
 - **`lambda/`** — the actual Lambda handler code (`com.lambda`), built into a shaded jar that the CDK
