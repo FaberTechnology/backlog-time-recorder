@@ -12,10 +12,27 @@ import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import com.lambda.WebhookPayload;
 import com.lambda.models.Issue;
 import com.lambda.models.RestrictedStatusTransitionPolicy;
+import com.nulabinc.backlog4j.Activity;
 import com.nulabinc.backlog4j.Issue.StatusType;
 import com.nulabinc.backlog4j.internal.json.Jackson;
 
 public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
+
+    private static final StatusChangeNotifier NO_OP_NOTIFIER = new StatusChangeNotifier() {
+        @Override
+        public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode,
+                final int newStatusCode, final long actorUserId) {
+        }
+
+        @Override
+        public void notifyInvalidStatusTransition(final int issueId, final int oldStatusCode,
+                final int newStatusCode, final long actorUserId) {
+        }
+
+        @Override
+        public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long actorUserId) {
+        }
+    };
 
     private IssueUpdater updater;
     private StatusChangeNotifier notifier;
@@ -23,7 +40,7 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
     private IssueUpdateOrchestrator orchestrator;
 
     BacklogTimeRecorder(final IssueUpdater updater) {
-        this(updater, (issueId, oldStatusCode, newStatusCode, actorUserId) -> { });
+        this(updater, NO_OP_NOTIFIER);
     }
 
     BacklogTimeRecorder(final IssueUpdater updater, final StatusChangeNotifier notifier) {
@@ -76,13 +93,24 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
 
         final String issueTypeName = issue.getIssueType() != null ? issue.getIssueType().getName() : null;
         final String projectKey = payload.getProject() != null ? payload.getProject().getProjectKey() : null;
+        final boolean pbiValidationEnabled = getStatusTransitionPolicy().isEnabledProject(projectKey)
+                && getStatusTransitionPolicy().isPbiIssueType(issueTypeName);
 
-        if (newStatus != 0 && getStatusTransitionPolicy().isEnabledProject(projectKey)
-                && getStatusTransitionPolicy().isPbiIssueType(issueTypeName)
-                && getStatusTransitionPolicy().isRestrictedTransition(oldStatus, newStatus)) {
+        if (pbiValidationEnabled) {
             final long actorUserId = payload.getCreatedUser() != null ? payload.getCreatedUser().getId() : 0;
-            if (!getStatusTransitionPolicy().isAuthorized(actorUserId)) {
-                getNotifier().notifyUnauthorizedStatusChange(issue.getId(), oldStatus, newStatus, actorUserId);
+
+            if (Activity.Type.valueOf(payload.getType()) == Activity.Type.IssueCreated) {
+                final int creationStatus = issue.getStatus() != null ? issue.getStatus().getId() : 0;
+                if (getStatusTransitionPolicy().isInvalidCreationStatus(creationStatus)) {
+                    getNotifier().notifyInvalidCreationStatus(issue.getId(), creationStatus, actorUserId);
+                }
+            } else if (newStatus != 0) {
+                if (getStatusTransitionPolicy().isInvalidOpenTransition(oldStatus, newStatus)) {
+                    getNotifier().notifyInvalidStatusTransition(issue.getId(), oldStatus, newStatus, actorUserId);
+                } else if (getStatusTransitionPolicy().isRestrictedTransition(oldStatus, newStatus)
+                        && !getStatusTransitionPolicy().isAuthorized(actorUserId)) {
+                    getNotifier().notifyUnauthorizedStatusChange(issue.getId(), oldStatus, newStatus, actorUserId);
+                }
             }
         }
 

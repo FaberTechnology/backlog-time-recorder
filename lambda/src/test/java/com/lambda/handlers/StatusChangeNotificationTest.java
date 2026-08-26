@@ -104,6 +104,95 @@ public class StatusChangeNotificationTest {
         assertTrue(notifier.calls.isEmpty());
     }
 
+    @Test
+    public void handleRequest_nonProductOwnerMovesOpenToInProgress_notifiesInvalidTransitionOnly() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertEquals(1, notifier.invalidTransitionCalls.size());
+        assertTrue(notifier.calls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_productOwnerMovesOpenToInProgress_notifiesInvalidTransitionToo() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_IN_PROGRESS, PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertEquals(1, notifier.invalidTransitionCalls.size());
+        assertTrue(notifier.calls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_openToSettingPriority_doesNotNotifyInvalidTransition() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, SETTING_PRIORITY_STATUS_ID, PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertTrue(notifier.invalidTransitionCalls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_pbiCreatedWithNonOpenStatus_notifiesInvalidCreation() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(creationBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertEquals(1, notifier.invalidCreationCalls.size());
+        final long[] call = notifier.invalidCreationCalls.get(0);
+        assertEquals(STATUS_IN_PROGRESS, call[1]);
+        assertEquals(NON_PRODUCT_OWNER_ID, call[2]);
+    }
+
+    @Test
+    public void handleRequest_pbiCreatedWithOpenStatus_doesNotNotify() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(creationBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertTrue(notifier.invalidCreationCalls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_nonPbiCreatedWithNonOpenStatus_doesNotNotify() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(creationBody(ENABLED_PROJECT_KEY, BUG_ISSUE_TYPE_NAME, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertTrue(notifier.invalidCreationCalls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_nonEnabledProjectCreatedWithNonOpenStatus_doesNotNotify() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(creationBody(OTHER_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertTrue(notifier.invalidCreationCalls.isEmpty());
+    }
+
     private static BacklogTimeRecorder handlerFor(final StatusChangeNotifier notifier) {
         final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
                 Set.of(PRODUCT_OWNER_ID), Set.of(SETTING_PRIORITY_STATUS_ID), Set.of(ENABLED_PROJECT_KEY));
@@ -134,13 +223,43 @@ public class StatusChangeNotificationTest {
                 + "}";
     }
 
+    private static String creationBody(final String projectKey, final String issueTypeName, final int statusId,
+            final long createdUserId) {
+        return "{"
+                + "\"id\":1,"
+                + "\"type\":1,"
+                + "\"project\":{\"id\":100000,\"projectKey\":\"" + projectKey + "\",\"name\":\"Test Project\"},"
+                + "\"content\":{"
+                + "\"id\":200000001,"
+                + "\"summary\":\"PBI test issue\","
+                + "\"issueType\":{\"id\":12345,\"name\":\"" + issueTypeName + "\"},"
+                + "\"status\":{\"id\":" + statusId + ",\"name\":\"Test Status\"}"
+                + "},"
+                + "\"createdUser\":{\"id\":" + createdUserId + ",\"name\":\"Test User\",\"roleType\":2,\"lang\":\"en\"},"
+                + "\"created\":\"2023-01-03T00:00:00Z\""
+                + "}";
+    }
+
     private static class RecordingNotifier implements StatusChangeNotifier {
         private final List<long[]> calls = new ArrayList<>();
+        private final List<long[]> invalidTransitionCalls = new ArrayList<>();
+        private final List<long[]> invalidCreationCalls = new ArrayList<>();
 
         @Override
         public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode, final int newStatusCode,
                 final long actorUserId) {
             calls.add(new long[] {issueId, oldStatusCode, newStatusCode, actorUserId});
+        }
+
+        @Override
+        public void notifyInvalidStatusTransition(final int issueId, final int oldStatusCode, final int newStatusCode,
+                final long actorUserId) {
+            invalidTransitionCalls.add(new long[] {issueId, oldStatusCode, newStatusCode, actorUserId});
+        }
+
+        @Override
+        public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long actorUserId) {
+            invalidCreationCalls.add(new long[] {issueId, statusCode, actorUserId});
         }
     }
 }

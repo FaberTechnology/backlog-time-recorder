@@ -73,10 +73,30 @@ public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifi
     @Override
     public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode, final int newStatusCode,
             final long actorUserId) {
-        final String content = String.format(
+        postViolationComment(issueId, String.format(
                 "Status changed from %s to %s by user #%d without Product Owner permission. "
                         + "This change was not reverted automatically — please review.",
-                describeStatus(oldStatusCode), describeStatus(newStatusCode), actorUserId);
+                describeStatus(oldStatusCode), describeStatus(newStatusCode), actorUserId));
+    }
+
+    @Override
+    public void notifyInvalidStatusTransition(final int issueId, final int oldStatusCode, final int newStatusCode,
+            final long actorUserId) {
+        postViolationComment(issueId, String.format(
+                "Status changed from %s to %s by user #%d, but Open may only move to Setting Priority or Closed. "
+                        + "This change was not reverted automatically — please review.",
+                describeStatus(oldStatusCode), describeStatus(newStatusCode), actorUserId));
+    }
+
+    @Override
+    public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long actorUserId) {
+        postViolationComment(issueId, String.format(
+                "PBI created with status %s by user #%d, but PBIs must be created with status Open. "
+                        + "This was not reverted automatically — please review.",
+                describeStatus(statusCode), actorUserId));
+    }
+
+    private void postViolationComment(final int issueId, final String content) {
         client.addIssueComment(new AddIssueCommentParams(issueId, content)
                 .notifiedUserIds(Collections.singletonList(STATUS_VIOLATION_NOTIFY_USER_ID)));
     }

@@ -178,4 +178,39 @@ public class RestrictedStatusTransitionPolicyTest {
 
         assertEquals(Set.of("PROJ1", "PROJ2"), keys);
     }
+
+    @Test
+    public void isInvalidOpenTransition_openToInProgress_returnsTrue() {
+        assertTrue(policy.isInvalidOpenTransition(StatusType.Open.getIntValue(), StatusType.InProgress.getIntValue()));
+    }
+
+    @Test
+    public void isInvalidOpenTransition_openToResolved_returnsTrue() {
+        assertTrue(policy.isInvalidOpenTransition(StatusType.Open.getIntValue(), StatusType.Resolved.getIntValue()));
+    }
+
+    @Test
+    public void isInvalidOpenTransition_openToSettingPriority_returnsFalse() {
+        assertFalse(policy.isInvalidOpenTransition(StatusType.Open.getIntValue(), SETTING_PRIORITY_STATUS_ID));
+    }
+
+    @Test
+    public void isInvalidOpenTransition_openToClosed_returnsFalse() {
+        assertFalse(policy.isInvalidOpenTransition(StatusType.Open.getIntValue(), StatusType.Closed.getIntValue()));
+    }
+
+    @Test
+    public void isInvalidOpenTransition_notFromOpen_returnsFalse() {
+        assertFalse(policy.isInvalidOpenTransition(StatusType.InProgress.getIntValue(), StatusType.Closed.getIntValue()));
+    }
+
+    @Test
+    public void isInvalidCreationStatus_open_returnsFalse() {
+        assertFalse(policy.isInvalidCreationStatus(StatusType.Open.getIntValue()));
+    }
+
+    @Test
+    public void isInvalidCreationStatus_nonOpen_returnsTrue() {
+        assertTrue(policy.isInvalidCreationStatus(StatusType.InProgress.getIntValue()));
+    }
 }

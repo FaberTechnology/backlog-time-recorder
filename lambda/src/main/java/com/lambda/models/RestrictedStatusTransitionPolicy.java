@@ -82,4 +82,15 @@ public class RestrictedStatusTransitionPolicy {
     public boolean isEnabledProject(final String projectKey) {
         return enabledProjectKeys.contains(projectKey);
     }
+
+    public boolean isInvalidOpenTransition(final int oldStatusCode, final int newStatusCode) {
+        if (oldStatusCode != StatusType.Open.getIntValue()) {
+            return false;
+        }
+        return newStatusCode != StatusType.Closed.getIntValue() && !settingPriorityStatusIds.contains(newStatusCode);
+    }
+
+    public boolean isInvalidCreationStatus(final int statusCode) {
+        return statusCode != StatusType.Open.getIntValue();
+    }
 }

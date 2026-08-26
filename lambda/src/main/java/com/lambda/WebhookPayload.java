@@ -31,4 +31,8 @@ public class WebhookPayload {
     public Project getProject() {
         return project;
     }
+
+    public int getType() {
+        return type;
+    }
 }

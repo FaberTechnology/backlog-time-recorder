@@ -2,4 +2,6 @@ package com.lambda.handlers;
 
 public interface StatusChangeNotifier {
     void notifyUnauthorizedStatusChange(int issueId, int oldStatusCode, int newStatusCode, long actorUserId);
+    void notifyInvalidStatusTransition(int issueId, int oldStatusCode, int newStatusCode, long actorUserId);
+    void notifyInvalidCreationStatus(int issueId, int statusCode, long actorUserId);
 }

@@ -76,11 +76,20 @@ Set the `BACKLOG_API_KEY` environment variable to a Backlog API key for the
 the Lambda's environment) and to run the Lambda's tests/build locally.
 
 Optionally, set `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`, and
-`ENABLED_PROJECT_KEYS` to enable the PBI status-transition check (Open ->
-Setting Priority, or any status -> Closed, requires a Product Owner). This
-check only applies to issues whose Backlog issue type name is exactly "PBI"
-(hardcoded) in projects listed in `ENABLED_PROJECT_KEYS`, so the rule can be
-rolled out to a few projects first. See the Configuration table below.
+`ENABLED_PROJECT_KEYS` to enable PBI status validation. This only applies to
+issues whose Backlog issue type name is exactly "PBI" (hardcoded) in projects
+listed in `ENABLED_PROJECT_KEYS`, so the rules can be rolled out to a few
+projects first. Once enabled for a project, it enforces:
+
+- Open -> Setting Priority, or any status -> Closed, requires a Product
+  Owner (a user ID in `PRODUCT_OWNER_USER_IDS`).
+- From Open, a PBI may only move to Setting Priority or Closed — any other
+  status is flagged, regardless of who made the change.
+- A PBI must be created with status Open — creating one with any other
+  status is flagged.
+
+Every flagged change gets an issue comment instead of being reverted. See
+the Configuration table below.
 
 ### 3. Run the application
 
