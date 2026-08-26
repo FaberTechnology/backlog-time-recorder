@@ -26,6 +26,15 @@ public class BacklogTimeRecorderStack extends Stack {
         final Map<String, String> env = new HashMap<>() {
             {
                 put("BACKLOG_API_KEY", System.getenv("BACKLOG_API_KEY"));
+                putIfSet("PRODUCT_OWNER_USER_IDS");
+                putIfSet("SETTING_PRIORITY_STATUS_ID");
+            }
+
+            private void putIfSet(final String name) {
+                final String value = System.getenv(name);
+                if (value != null) {
+                    put(name, value);
+                }
             }
         };
 

@@ -75,6 +75,11 @@ Set the `BACKLOG_API_KEY` environment variable to a Backlog API key for the
 `faber-wi` space. It is required both to deploy (the CDK stack injects it into
 the Lambda's environment) and to run the Lambda's tests/build locally.
 
+Optionally, set `PRODUCT_OWNER_USER_IDS` and `SETTING_PRIORITY_STATUS_ID` to
+enable the PBI status-transition check (Open -> Setting Priority, or any
+status -> Closed, requires a Product Owner). See the Configuration table
+below.
+
 ### 3. Run the application
 
 This service has no local "run" mode — it is deployed as a Lambda and invoked
@@ -116,9 +121,11 @@ No linter or static analysis tool is currently configured for this project.
 
 ## Configuration
 
-| Variable          | Description                                              | Required |
-| ------------------ | --------------------------------------------------------- | -------- |
-| `BACKLOG_API_KEY`  | API key for the `faber-wi` Backlog space, used by both the deployed Lambda and the CDK/Maven build | Yes      |
+| Variable                     | Description                                              | Required |
+| ----------------------------- | --------------------------------------------------------- | -------- |
+| `BACKLOG_API_KEY`             | API key for the `faber-wi` Backlog space, used by both the deployed Lambda and the CDK/Maven build | Yes      |
+| `PRODUCT_OWNER_USER_IDS`      | Comma-separated Backlog user IDs allowed to move a PBI from Open to Setting Priority, or to Closed. If unset, the status-transition check is disabled | No       |
+| `SETTING_PRIORITY_STATUS_ID`  | Numeric Backlog status ID of the project's custom "Setting Priority" status | No (required only to enforce the Open -> Setting Priority rule) |
 
 ## Architecture
 
