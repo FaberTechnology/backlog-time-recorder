@@ -1,0 +1,112 @@
+package com.lambda.handlers;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.lambda.TestContext;
+import com.lambda.models.RestrictedStatusTransitionPolicy;
+
+public class StatusChangeNotificationTest {
+
+    private static final long PRODUCT_OWNER_ID = 100000L;
+    private static final long NON_PRODUCT_OWNER_ID = 999999L;
+    private static final int SETTING_PRIORITY_STATUS_ID = 10001;
+    private static final int STATUS_OPEN = 1;
+    private static final int STATUS_IN_PROGRESS = 2;
+    private static final int STATUS_CLOSED = 4;
+
+    private static final IssueUpdater NO_OP_UPDATER = (issueId, newStatusCode, hasDateChange) -> null;
+
+    @Test
+    public void handleRequest_nonProductOwnerClosesIssue_notifiesOnce() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)), new TestContext());
+
+        assertEquals(1, notifier.calls.size());
+        final long[] call = notifier.calls.get(0);
+        assertEquals(STATUS_OPEN, call[1]);
+        assertEquals(STATUS_CLOSED, call[2]);
+        assertEquals(NON_PRODUCT_OWNER_ID, call[3]);
+    }
+
+    @Test
+    public void handleRequest_productOwnerClosesIssue_doesNotNotify() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(STATUS_OPEN, STATUS_CLOSED, PRODUCT_OWNER_ID)), new TestContext());
+
+        assertTrue(notifier.calls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_nonProductOwnerSetsPriority_notifiesOnce() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(STATUS_OPEN, SETTING_PRIORITY_STATUS_ID, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertEquals(1, notifier.calls.size());
+    }
+
+    @Test
+    public void handleRequest_nonProductOwnerStartsProgress_doesNotNotify() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(STATUS_OPEN, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)), new TestContext());
+
+        assertTrue(notifier.calls.isEmpty());
+    }
+
+    private static BacklogTimeRecorder handlerFor(final StatusChangeNotifier notifier) {
+        final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
+                Set.of(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID);
+        return new BacklogTimeRecorder(NO_OP_UPDATER, notifier, policy);
+    }
+
+    private static APIGatewayV2HTTPEvent event(final String body) {
+        final APIGatewayV2HTTPEvent event = new APIGatewayV2HTTPEvent();
+        event.setBody(body);
+        event.setIsBase64Encoded(false);
+        return event;
+    }
+
+    private static String statusChangeBody(final int oldStatus, final int newStatus, final long createdUserId) {
+        return "{"
+                + "\"id\":1,"
+                + "\"content\":{"
+                + "\"id\":200000001,"
+                + "\"summary\":\"PBI test issue\","
+                + "\"changes\":[{\"field\":\"status\",\"new_value\":\"" + newStatus + "\",\"old_value\":\""
+                + oldStatus + "\",\"type\":\"standard\"}]"
+                + "},"
+                + "\"createdUser\":{\"id\":" + createdUserId + ",\"name\":\"Test User\",\"roleType\":2,\"lang\":\"en\"},"
+                + "\"created\":\"2023-01-03T00:00:00Z\""
+                + "}";
+    }
+
+    private static class RecordingNotifier implements StatusChangeNotifier {
+        private final List<long[]> calls = new ArrayList<>();
+
+        @Override
+        public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode, final int newStatusCode,
+                final long actorUserId) {
+            calls.add(new long[] {issueId, oldStatusCode, newStatusCode, actorUserId});
+        }
+    }
+}

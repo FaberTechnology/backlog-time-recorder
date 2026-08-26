@@ -1,5 +1,6 @@
 package com.lambda.models;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,5 +65,32 @@ public class RestrictedStatusTransitionPolicyTest {
                 Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), SETTING_PRIORITY_STATUS_ID);
 
         assertTrue(multiOwnerPolicy.isAuthorized(OTHER_USER_ID));
+    }
+
+    @Test
+    public void parseUserIds_null_returnsEmptySet() {
+        assertTrue(RestrictedStatusTransitionPolicy.parseUserIds(null).isEmpty());
+    }
+
+    @Test
+    public void parseUserIds_blank_returnsEmptySet() {
+        assertTrue(RestrictedStatusTransitionPolicy.parseUserIds("  ").isEmpty());
+    }
+
+    @Test
+    public void parseUserIds_csvWithSpacesAndTrailingComma_parsesAllIds() {
+        final Set<Long> ids = RestrictedStatusTransitionPolicy.parseUserIds(" 399389, 111111,");
+
+        assertEquals(Set.of(399389L, 111111L), ids);
+    }
+
+    @Test
+    public void parseStatusId_null_returnsZero() {
+        assertEquals(0, RestrictedStatusTransitionPolicy.parseStatusId(null));
+    }
+
+    @Test
+    public void parseStatusId_validValue_returnsParsedInt() {
+        assertEquals(10001, RestrictedStatusTransitionPolicy.parseStatusId(" 10001 "));
     }
 }

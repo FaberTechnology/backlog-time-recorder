@@ -23,4 +23,8 @@ public class WebhookPayload {
     public Issue getContent() {
         return content;
     }
+
+    public User getCreatedUser() {
+        return createdUser;
+    }
 }
