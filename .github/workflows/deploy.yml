@@ -39,11 +39,11 @@ jobs:
         env:
           BACKLOG_API_KEY: ${{ secrets.BACKLOG_API_KEY }}
           PRODUCT_OWNER_USER_IDS: ${{ secrets.PRODUCT_OWNER_USER_IDS }}
-          SETTING_PRIORITY_STATUS_ID: ${{ secrets.SETTING_PRIORITY_STATUS_ID }}
+          SETTING_PRIORITY_STATUS_IDS: ${{ secrets.SETTING_PRIORITY_STATUS_IDS }}
 
       - name: Deploy
         run: cdk deploy --require-approval never
         env:
           BACKLOG_API_KEY: ${{ secrets.BACKLOG_API_KEY }}
           PRODUCT_OWNER_USER_IDS: ${{ secrets.PRODUCT_OWNER_USER_IDS }}
-          SETTING_PRIORITY_STATUS_ID: ${{ secrets.SETTING_PRIORITY_STATUS_ID }}
+          SETTING_PRIORITY_STATUS_IDS: ${{ secrets.SETTING_PRIORITY_STATUS_IDS }}

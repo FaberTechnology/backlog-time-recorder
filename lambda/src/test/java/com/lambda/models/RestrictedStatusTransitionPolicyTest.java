@@ -20,7 +20,7 @@ public class RestrictedStatusTransitionPolicyTest {
     private static final String BUG_ISSUE_TYPE_NAME = "Bug";
 
     private final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
-            Collections.singleton(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID);
+            Collections.singleton(PRODUCT_OWNER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID));
 
     @Test
     public void isRestrictedTransition_openToSettingPriority_returnsTrue() {
@@ -46,7 +46,7 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isRestrictedTransition_noProductOwnersConfigured_returnsFalse() {
         final RestrictedStatusTransitionPolicy disabled = new RestrictedStatusTransitionPolicy(
-                Collections.emptySet(), SETTING_PRIORITY_STATUS_ID);
+                Collections.emptySet(), Collections.singleton(SETTING_PRIORITY_STATUS_ID));
 
         assertFalse(disabled.isRestrictedTransition(StatusType.Open.getIntValue(), StatusType.Closed.getIntValue()));
     }
@@ -64,7 +64,7 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isAuthorized_multipleProductOwners_matchesAny() {
         final RestrictedStatusTransitionPolicy multiOwnerPolicy = new RestrictedStatusTransitionPolicy(
-                Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), SETTING_PRIORITY_STATUS_ID);
+                Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID));
 
         assertTrue(multiOwnerPolicy.isAuthorized(OTHER_USER_ID));
     }
@@ -107,12 +107,28 @@ public class RestrictedStatusTransitionPolicyTest {
     }
 
     @Test
-    public void parseStatusId_null_returnsZero() {
-        assertEquals(0, RestrictedStatusTransitionPolicy.parseStatusId(null));
+    public void parseStatusIds_null_returnsEmptySet() {
+        assertTrue(RestrictedStatusTransitionPolicy.parseStatusIds(null).isEmpty());
     }
 
     @Test
-    public void parseStatusId_validValue_returnsParsedInt() {
-        assertEquals(10001, RestrictedStatusTransitionPolicy.parseStatusId(" 10001 "));
+    public void parseStatusIds_blank_returnsEmptySet() {
+        assertTrue(RestrictedStatusTransitionPolicy.parseStatusIds("  ").isEmpty());
+    }
+
+    @Test
+    public void parseStatusIds_csvWithSpacesAndTrailingComma_parsesAllIds() {
+        final Set<Integer> ids = RestrictedStatusTransitionPolicy.parseStatusIds(" 10001, 20002,");
+
+        assertEquals(Set.of(10001, 20002), ids);
+    }
+
+    @Test
+    public void isRestrictedTransition_openToAnyConfiguredSettingPriorityId_returnsTrue() {
+        final RestrictedStatusTransitionPolicy multiProjectPolicy = new RestrictedStatusTransitionPolicy(
+                Collections.singleton(PRODUCT_OWNER_ID), Set.of(10001, 20002));
+
+        assertTrue(multiProjectPolicy.isRestrictedTransition(StatusType.Open.getIntValue(), 10001));
+        assertTrue(multiProjectPolicy.isRestrictedTransition(StatusType.Open.getIntValue(), 20002));
     }
 }

@@ -92,7 +92,7 @@ public class StatusChangeNotificationTest {
 
     private static BacklogTimeRecorder handlerFor(final StatusChangeNotifier notifier) {
         final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
-                Set.of(PRODUCT_OWNER_ID), SETTING_PRIORITY_STATUS_ID);
+                Set.of(PRODUCT_OWNER_ID), Set.of(SETTING_PRIORITY_STATUS_ID));
         return new BacklogTimeRecorder(NO_OP_UPDATER, notifier, policy);
     }
 

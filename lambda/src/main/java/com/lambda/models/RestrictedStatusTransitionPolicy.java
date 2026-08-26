@@ -12,17 +12,18 @@ public class RestrictedStatusTransitionPolicy {
     private static final String PBI_ISSUE_TYPE_NAME = "PBI";
 
     private final Set<Long> productOwnerUserIds;
-    private final int settingPriorityStatusId;
+    private final Set<Integer> settingPriorityStatusIds;
 
-    public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds, final int settingPriorityStatusId) {
+    public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds,
+            final Set<Integer> settingPriorityStatusIds) {
         this.productOwnerUserIds = productOwnerUserIds;
-        this.settingPriorityStatusId = settingPriorityStatusId;
+        this.settingPriorityStatusIds = settingPriorityStatusIds;
     }
 
     public static RestrictedStatusTransitionPolicy fromEnv() {
         return new RestrictedStatusTransitionPolicy(
                 parseUserIds(System.getenv("PRODUCT_OWNER_USER_IDS")),
-                parseStatusId(System.getenv("SETTING_PRIORITY_STATUS_ID")));
+                parseStatusIds(System.getenv("SETTING_PRIORITY_STATUS_IDS")));
     }
 
     static Set<Long> parseUserIds(final String csv) {
@@ -36,11 +37,15 @@ public class RestrictedStatusTransitionPolicy {
                 .collect(Collectors.toSet());
     }
 
-    static int parseStatusId(final String value) {
-        if (value == null || value.isBlank()) {
-            return 0;
+    static Set<Integer> parseStatusIds(final String csv) {
+        if (csv == null || csv.isBlank()) {
+            return Collections.emptySet();
         }
-        return Integer.parseInt(value.trim());
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.toSet());
     }
 
     public boolean isRestrictedTransition(final int oldStatusCode, final int newStatusCode) {
@@ -50,7 +55,7 @@ public class RestrictedStatusTransitionPolicy {
         if (newStatusCode == StatusType.Closed.getIntValue()) {
             return true;
         }
-        return oldStatusCode == StatusType.Open.getIntValue() && newStatusCode == settingPriorityStatusId;
+        return oldStatusCode == StatusType.Open.getIntValue() && settingPriorityStatusIds.contains(newStatusCode);
     }
 
     public boolean isAuthorized(final long actorUserId) {
