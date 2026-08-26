@@ -27,4 +27,8 @@ public class WebhookPayload {
     public User getCreatedUser() {
         return createdUser;
     }
+
+    public Project getProject() {
+        return project;
+    }
 }

@@ -13,17 +13,20 @@ public class RestrictedStatusTransitionPolicy {
 
     private final Set<Long> productOwnerUserIds;
     private final Set<Integer> settingPriorityStatusIds;
+    private final Set<String> enabledProjectKeys;
 
     public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds,
-            final Set<Integer> settingPriorityStatusIds) {
+            final Set<Integer> settingPriorityStatusIds, final Set<String> enabledProjectKeys) {
         this.productOwnerUserIds = productOwnerUserIds;
         this.settingPriorityStatusIds = settingPriorityStatusIds;
+        this.enabledProjectKeys = enabledProjectKeys;
     }
 
     public static RestrictedStatusTransitionPolicy fromEnv() {
         return new RestrictedStatusTransitionPolicy(
                 parseUserIds(System.getenv("PRODUCT_OWNER_USER_IDS")),
-                parseStatusIds(System.getenv("SETTING_PRIORITY_STATUS_IDS")));
+                parseStatusIds(System.getenv("SETTING_PRIORITY_STATUS_IDS")),
+                parseProjectKeys(System.getenv("ENABLED_PROJECT_KEYS")));
     }
 
     static Set<Long> parseUserIds(final String csv) {
@@ -34,6 +37,16 @@ public class RestrictedStatusTransitionPolicy {
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .map(Long::parseLong)
+                .collect(Collectors.toSet());
+    }
+
+    static Set<String> parseProjectKeys(final String csv) {
+        if (csv == null || csv.isBlank()) {
+            return Collections.emptySet();
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
                 .collect(Collectors.toSet());
     }
 
@@ -64,5 +77,9 @@ public class RestrictedStatusTransitionPolicy {
 
     public boolean isPbiIssueType(final String issueTypeName) {
         return PBI_ISSUE_TYPE_NAME.equals(issueTypeName);
+    }
+
+    public boolean isEnabledProject(final String projectKey) {
+        return enabledProjectKeys.contains(projectKey);
     }
 }

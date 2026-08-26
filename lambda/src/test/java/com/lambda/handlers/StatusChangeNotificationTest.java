@@ -20,6 +20,8 @@ public class StatusChangeNotificationTest {
     private static final int SETTING_PRIORITY_STATUS_ID = 10001;
     private static final String PBI_ISSUE_TYPE_NAME = "PBI";
     private static final String BUG_ISSUE_TYPE_NAME = "Bug";
+    private static final String ENABLED_PROJECT_KEY = "PROJ1";
+    private static final String OTHER_PROJECT_KEY = "PROJ2";
     private static final int STATUS_OPEN = 1;
     private static final int STATUS_IN_PROGRESS = 2;
     private static final int STATUS_CLOSED = 4;
@@ -32,7 +34,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertEquals(1, notifier.calls.size());
@@ -48,7 +50,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, PRODUCT_OWNER_ID)),
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertTrue(notifier.calls.isEmpty());
@@ -60,7 +62,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, SETTING_PRIORITY_STATUS_ID, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, SETTING_PRIORITY_STATUS_ID, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertEquals(1, notifier.calls.size());
@@ -72,7 +74,7 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_IN_PROGRESS, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertTrue(notifier.calls.isEmpty());
@@ -84,7 +86,19 @@ public class StatusChangeNotificationTest {
         final BacklogTimeRecorder handler = handlerFor(notifier);
 
         handler.handleRequest(
-                event(statusChangeBody(BUG_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
+                event(statusChangeBody(ENABLED_PROJECT_KEY, BUG_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertTrue(notifier.calls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_nonEnabledProjectClosedByNonProductOwner_doesNotNotify() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final BacklogTimeRecorder handler = handlerFor(notifier);
+
+        handler.handleRequest(
+                event(statusChangeBody(OTHER_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
                 new TestContext());
 
         assertTrue(notifier.calls.isEmpty());
@@ -92,7 +106,7 @@ public class StatusChangeNotificationTest {
 
     private static BacklogTimeRecorder handlerFor(final StatusChangeNotifier notifier) {
         final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
-                Set.of(PRODUCT_OWNER_ID), Set.of(SETTING_PRIORITY_STATUS_ID));
+                Set.of(PRODUCT_OWNER_ID), Set.of(SETTING_PRIORITY_STATUS_ID), Set.of(ENABLED_PROJECT_KEY));
         return new BacklogTimeRecorder(NO_OP_UPDATER, notifier, policy);
     }
 
@@ -103,10 +117,11 @@ public class StatusChangeNotificationTest {
         return event;
     }
 
-    private static String statusChangeBody(final String issueTypeName, final int oldStatus, final int newStatus,
-            final long createdUserId) {
+    private static String statusChangeBody(final String projectKey, final String issueTypeName, final int oldStatus,
+            final int newStatus, final long createdUserId) {
         return "{"
                 + "\"id\":1,"
+                + "\"project\":{\"id\":100000,\"projectKey\":\"" + projectKey + "\",\"name\":\"Test Project\"},"
                 + "\"content\":{"
                 + "\"id\":200000001,"
                 + "\"summary\":\"PBI test issue\","

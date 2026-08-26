@@ -18,9 +18,12 @@ public class RestrictedStatusTransitionPolicyTest {
     private static final int SETTING_PRIORITY_STATUS_ID = 10001;
     private static final String PBI_ISSUE_TYPE_NAME = "PBI";
     private static final String BUG_ISSUE_TYPE_NAME = "Bug";
+    private static final String ENABLED_PROJECT_KEY = "PROJ1";
+    private static final String OTHER_PROJECT_KEY = "PROJ2";
 
     private final RestrictedStatusTransitionPolicy policy = new RestrictedStatusTransitionPolicy(
-            Collections.singleton(PRODUCT_OWNER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID));
+            Collections.singleton(PRODUCT_OWNER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID),
+            Collections.singleton(ENABLED_PROJECT_KEY));
 
     @Test
     public void isRestrictedTransition_openToSettingPriority_returnsTrue() {
@@ -46,7 +49,8 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isRestrictedTransition_noProductOwnersConfigured_returnsFalse() {
         final RestrictedStatusTransitionPolicy disabled = new RestrictedStatusTransitionPolicy(
-                Collections.emptySet(), Collections.singleton(SETTING_PRIORITY_STATUS_ID));
+                Collections.emptySet(), Collections.singleton(SETTING_PRIORITY_STATUS_ID),
+                Collections.singleton(ENABLED_PROJECT_KEY));
 
         assertFalse(disabled.isRestrictedTransition(StatusType.Open.getIntValue(), StatusType.Closed.getIntValue()));
     }
@@ -64,7 +68,8 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isAuthorized_multipleProductOwners_matchesAny() {
         final RestrictedStatusTransitionPolicy multiOwnerPolicy = new RestrictedStatusTransitionPolicy(
-                Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID));
+                Set.of(PRODUCT_OWNER_ID, OTHER_USER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID),
+                Collections.singleton(ENABLED_PROJECT_KEY));
 
         assertTrue(multiOwnerPolicy.isAuthorized(OTHER_USER_ID));
     }
@@ -126,9 +131,51 @@ public class RestrictedStatusTransitionPolicyTest {
     @Test
     public void isRestrictedTransition_openToAnyConfiguredSettingPriorityId_returnsTrue() {
         final RestrictedStatusTransitionPolicy multiProjectPolicy = new RestrictedStatusTransitionPolicy(
-                Collections.singleton(PRODUCT_OWNER_ID), Set.of(10001, 20002));
+                Collections.singleton(PRODUCT_OWNER_ID), Set.of(10001, 20002),
+                Collections.singleton(ENABLED_PROJECT_KEY));
 
         assertTrue(multiProjectPolicy.isRestrictedTransition(StatusType.Open.getIntValue(), 10001));
         assertTrue(multiProjectPolicy.isRestrictedTransition(StatusType.Open.getIntValue(), 20002));
+    }
+
+    @Test
+    public void isEnabledProject_enabledKey_returnsTrue() {
+        assertTrue(policy.isEnabledProject(ENABLED_PROJECT_KEY));
+    }
+
+    @Test
+    public void isEnabledProject_notEnabledKey_returnsFalse() {
+        assertFalse(policy.isEnabledProject(OTHER_PROJECT_KEY));
+    }
+
+    @Test
+    public void isEnabledProject_null_returnsFalse() {
+        assertFalse(policy.isEnabledProject(null));
+    }
+
+    @Test
+    public void isEnabledProject_multipleEnabledProjects_matchesAny() {
+        final RestrictedStatusTransitionPolicy multiProjectPolicy = new RestrictedStatusTransitionPolicy(
+                Collections.singleton(PRODUCT_OWNER_ID), Collections.singleton(SETTING_PRIORITY_STATUS_ID),
+                Set.of(ENABLED_PROJECT_KEY, OTHER_PROJECT_KEY));
+
+        assertTrue(multiProjectPolicy.isEnabledProject(OTHER_PROJECT_KEY));
+    }
+
+    @Test
+    public void parseProjectKeys_null_returnsEmptySet() {
+        assertTrue(RestrictedStatusTransitionPolicy.parseProjectKeys(null).isEmpty());
+    }
+
+    @Test
+    public void parseProjectKeys_blank_returnsEmptySet() {
+        assertTrue(RestrictedStatusTransitionPolicy.parseProjectKeys("  ").isEmpty());
+    }
+
+    @Test
+    public void parseProjectKeys_csvWithSpacesAndTrailingComma_parsesAllKeys() {
+        final Set<String> keys = RestrictedStatusTransitionPolicy.parseProjectKeys(" PROJ1, PROJ2,");
+
+        assertEquals(Set.of("PROJ1", "PROJ2"), keys);
     }
 }
