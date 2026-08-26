@@ -1,6 +1,7 @@
 package com.lambda.handlers;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.lambda.helpers.MilestoneHelper;
@@ -15,11 +16,15 @@ import com.lambda.strategies.UpdateStrategy;
 import com.nulabinc.backlog4j.BacklogClient;
 import com.nulabinc.backlog4j.BacklogClientFactory;
 import com.nulabinc.backlog4j.Issue;
+import com.nulabinc.backlog4j.Issue.StatusType;
+import com.nulabinc.backlog4j.api.option.AddIssueCommentParams;
 import com.nulabinc.backlog4j.api.option.AddMilestoneParams;
 import com.nulabinc.backlog4j.api.option.UpdateIssueParams;
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure;
 
-public class IssueUpdateOrchestrator implements IssueUpdater {
+public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifier {
+
+    private static final long STATUS_VIOLATION_NOTIFY_USER_ID = 399389L; // Nguyen Hoang - monitors PO-only status rule during rollout
 
     private final BacklogClient client;
     private final MilestoneHelper milestoneHelper;
@@ -63,5 +68,21 @@ public class IssueUpdateOrchestrator implements IssueUpdater {
         }
 
         return client.updateIssue(params);
+    }
+
+    @Override
+    public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode, final int newStatusCode,
+            final long actorUserId) {
+        final String content = String.format(
+                "Status changed from %s to %s by user #%d without Product Owner permission. "
+                        + "This change was not reverted automatically — please review.",
+                describeStatus(oldStatusCode), describeStatus(newStatusCode), actorUserId);
+        client.addIssueComment(new AddIssueCommentParams(issueId, content)
+                .notifiedUserIds(Collections.singletonList(STATUS_VIOLATION_NOTIFY_USER_ID)));
+    }
+
+    private static String describeStatus(final int statusCode) {
+        final StatusType statusType = StatusType.valueOf(statusCode);
+        return statusType == StatusType.Custom ? "status #" + statusCode : statusType.name();
     }
 }
