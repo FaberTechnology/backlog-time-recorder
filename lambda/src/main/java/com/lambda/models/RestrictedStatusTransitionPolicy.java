@@ -11,19 +11,27 @@ public class RestrictedStatusTransitionPolicy {
 
     private final Set<Long> productOwnerUserIds;
     private final int settingPriorityStatusId;
+    private final Set<Long> pbiIssueTypeIds;
 
-    public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds, final int settingPriorityStatusId) {
+    public RestrictedStatusTransitionPolicy(final Set<Long> productOwnerUserIds, final int settingPriorityStatusId,
+            final Set<Long> pbiIssueTypeIds) {
         this.productOwnerUserIds = productOwnerUserIds;
         this.settingPriorityStatusId = settingPriorityStatusId;
+        this.pbiIssueTypeIds = pbiIssueTypeIds;
     }
 
     public static RestrictedStatusTransitionPolicy fromEnv() {
         return new RestrictedStatusTransitionPolicy(
-                parseUserIds(System.getenv("PRODUCT_OWNER_USER_IDS")),
-                parseStatusId(System.getenv("SETTING_PRIORITY_STATUS_ID")));
+                parseIdSet(System.getenv("PRODUCT_OWNER_USER_IDS")),
+                parseStatusId(System.getenv("SETTING_PRIORITY_STATUS_ID")),
+                parseIdSet(System.getenv("PBI_ISSUE_TYPE_IDS")));
     }
 
     static Set<Long> parseUserIds(final String csv) {
+        return parseIdSet(csv);
+    }
+
+    static Set<Long> parseIdSet(final String csv) {
         if (csv == null || csv.isBlank()) {
             return Collections.emptySet();
         }
@@ -53,5 +61,9 @@ public class RestrictedStatusTransitionPolicy {
 
     public boolean isAuthorized(final long actorUserId) {
         return productOwnerUserIds.contains(actorUserId);
+    }
+
+    public boolean isPbiIssueType(final long issueTypeId) {
+        return pbiIssueTypeIds.contains(issueTypeId);
     }
 }

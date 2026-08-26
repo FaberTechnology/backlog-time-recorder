@@ -74,7 +74,10 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
                 .map(change -> Integer.parseInt(change.getNewValue()))
                 .orElse(0);
 
-        if (newStatus != 0 && getStatusTransitionPolicy().isRestrictedTransition(oldStatus, newStatus)) {
+        final long issueTypeId = issue.getIssueType() != null ? issue.getIssueType().getId() : 0;
+
+        if (newStatus != 0 && getStatusTransitionPolicy().isPbiIssueType(issueTypeId)
+                && getStatusTransitionPolicy().isRestrictedTransition(oldStatus, newStatus)) {
             final long actorUserId = payload.getCreatedUser() != null ? payload.getCreatedUser().getId() : 0;
             if (!getStatusTransitionPolicy().isAuthorized(actorUserId)) {
                 getNotifier().notifyUnauthorizedStatusChange(issue.getId(), oldStatus, newStatus, actorUserId);
