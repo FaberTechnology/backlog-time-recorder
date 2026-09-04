@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.lambda.TestContext;
 import com.lambda.models.RestrictedStatusTransitionPolicy;
 
@@ -191,6 +192,28 @@ public class StatusChangeNotificationTest {
                 new TestContext());
 
         assertTrue(notifier.invalidCreationCalls.isEmpty());
+    }
+
+    @Test
+    public void handleRequest_policyThrowsOnMalformedConfig_doesNotCrashAndSkipsValidation() {
+        final RecordingNotifier notifier = new RecordingNotifier();
+        final RestrictedStatusTransitionPolicy throwingPolicy = new RestrictedStatusTransitionPolicy(
+                Set.of(PRODUCT_OWNER_ID), Set.of(SETTING_PRIORITY_STATUS_ID), Set.of(ENABLED_PROJECT_KEY)) {
+            @Override
+            public boolean isEnabledProject(final String projectKey) {
+                throw new NumberFormatException("simulated malformed env var");
+            }
+        };
+        final BacklogTimeRecorder handler = new BacklogTimeRecorder(NO_OP_UPDATER, notifier, throwingPolicy);
+
+        final APIGatewayV2HTTPResponse response = handler.handleRequest(
+                event(statusChangeBody(ENABLED_PROJECT_KEY, PBI_ISSUE_TYPE_NAME, STATUS_OPEN, STATUS_CLOSED, NON_PRODUCT_OWNER_ID)),
+                new TestContext());
+
+        assertTrue(notifier.calls.isEmpty());
+        assertTrue(notifier.invalidTransitionCalls.isEmpty());
+        assertTrue(notifier.invalidCreationCalls.isEmpty());
+        assertEquals(200, response.getStatusCode());
     }
 
     private static BacklogTimeRecorder handlerFor(final StatusChangeNotifier notifier) {

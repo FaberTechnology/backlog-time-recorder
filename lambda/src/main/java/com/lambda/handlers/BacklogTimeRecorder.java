@@ -91,10 +91,16 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
                 .map(change -> Integer.parseInt(change.getNewValue()))
                 .orElse(0);
 
-        final String issueTypeName = issue.getIssueType() != null ? issue.getIssueType().getName() : null;
-        final String projectKey = payload.getProject() != null ? payload.getProject().getProjectKey() : null;
-        final boolean pbiValidationEnabled = getStatusTransitionPolicy().isEnabledProject(projectKey)
-                && getStatusTransitionPolicy().isPbiIssueType(issueTypeName);
+        boolean pbiValidationEnabled = false;
+        try {
+            final String issueTypeName = issue.getIssueType() != null ? issue.getIssueType().getName() : null;
+            final String projectKey = payload.getProject() != null ? payload.getProject().getProjectKey() : null;
+            pbiValidationEnabled = getStatusTransitionPolicy().isEnabledProject(projectKey)
+                    && getStatusTransitionPolicy().isPbiIssueType(issueTypeName);
+        } catch (final RuntimeException e) {
+            logger.log("Skipping PBI status validation due to a configuration error: " + e.getMessage(),
+                    LogLevel.ERROR);
+        }
 
         if (pbiValidationEnabled) {
             final long actorUserId = payload.getCreatedUser() != null ? payload.getCreatedUser().getId() : 0;
