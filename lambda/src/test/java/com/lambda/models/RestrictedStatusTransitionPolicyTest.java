@@ -205,6 +205,16 @@ public class RestrictedStatusTransitionPolicyTest {
     }
 
     @Test
+    public void isInvalidOpenTransition_noSettingPriorityIdsConfigured_returnsFalse() {
+        final RestrictedStatusTransitionPolicy noSettingPriorityConfigured = new RestrictedStatusTransitionPolicy(
+                Collections.singleton(PRODUCT_OWNER_ID), Collections.emptySet(),
+                Collections.singleton(ENABLED_PROJECT_KEY));
+
+        assertFalse(noSettingPriorityConfigured.isInvalidOpenTransition(
+                StatusType.Open.getIntValue(), StatusType.InProgress.getIntValue()));
+    }
+
+    @Test
     public void isInvalidCreationStatus_open_returnsFalse() {
         assertFalse(policy.isInvalidCreationStatus(StatusType.Open.getIntValue()));
     }

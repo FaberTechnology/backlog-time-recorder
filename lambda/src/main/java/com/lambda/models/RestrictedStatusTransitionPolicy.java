@@ -84,7 +84,7 @@ public class RestrictedStatusTransitionPolicy {
     }
 
     public boolean isInvalidOpenTransition(final int oldStatusCode, final int newStatusCode) {
-        if (oldStatusCode != StatusType.Open.getIntValue()) {
+        if (oldStatusCode != StatusType.Open.getIntValue() || settingPriorityStatusIds.isEmpty()) {
             return false;
         }
         return newStatusCode != StatusType.Closed.getIntValue() && !settingPriorityStatusIds.contains(newStatusCode);
