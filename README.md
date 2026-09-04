@@ -75,6 +75,22 @@ Set the `BACKLOG_API_KEY` environment variable to a Backlog API key for the
 `faber-wi` space. It is required both to deploy (the CDK stack injects it into
 the Lambda's environment) and to run the Lambda's tests/build locally.
 
+Optionally, set `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`, and
+`ENABLED_PROJECT_KEYS` to enable PBI status validation. This only applies to
+issues whose Backlog issue type name is exactly "PBI" (hardcoded) in projects
+listed in `ENABLED_PROJECT_KEYS`, so the rules can be rolled out to a few
+projects first. Once enabled for a project, it enforces:
+
+- Open -> Setting Priority, or any status -> Closed, requires a Product
+  Owner (a user ID in `PRODUCT_OWNER_USER_IDS`).
+- From Open, a PBI may only move to Setting Priority or Closed — any other
+  status is flagged, regardless of who made the change.
+- A PBI must be created with status Open — creating one with any other
+  status is flagged.
+
+Every flagged change gets an issue comment instead of being reverted. See
+the Configuration table below.
+
 ### 3. Run the application
 
 This service has no local "run" mode — it is deployed as a Lambda and invoked
@@ -116,9 +132,12 @@ No linter or static analysis tool is currently configured for this project.
 
 ## Configuration
 
-| Variable          | Description                                              | Required |
-| ------------------ | --------------------------------------------------------- | -------- |
-| `BACKLOG_API_KEY`  | API key for the `faber-wi` Backlog space, used by both the deployed Lambda and the CDK/Maven build | Yes      |
+| Variable                     | Description                                              | Required |
+| ----------------------------- | --------------------------------------------------------- | -------- |
+| `BACKLOG_API_KEY`             | API key for the `faber-wi` Backlog space, used by both the deployed Lambda and the CDK/Maven build | Yes      |
+| `PRODUCT_OWNER_USER_IDS`      | Comma-separated Backlog user IDs allowed to move a PBI from Open to Setting Priority, or to Closed. If unset, the status-transition check is disabled | No       |
+| `SETTING_PRIORITY_STATUS_IDS` | Comma-separated numeric Backlog status IDs of the "Setting Priority" status, one per project (each Backlog project can assign it a different ID) | No (required only to enforce the Open -> Setting Priority rule) |
+| `ENABLED_PROJECT_KEYS`        | Comma-separated Backlog project keys (project codes) the status-transition check applies to. Lets the rule be rolled out to a few projects first; if unset, the check is disabled everywhere | No (required to enable the status-transition check) |
 
 ## Architecture
 

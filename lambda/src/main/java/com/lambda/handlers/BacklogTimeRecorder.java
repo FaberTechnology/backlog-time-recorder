@@ -11,15 +11,47 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.amazonaws.services.lambda.runtime.logging.LogLevel;
 import com.lambda.WebhookPayload;
 import com.lambda.models.Issue;
+import com.lambda.models.RestrictedStatusTransitionPolicy;
+import com.nulabinc.backlog4j.Activity;
 import com.nulabinc.backlog4j.Issue.StatusType;
 import com.nulabinc.backlog4j.internal.json.Jackson;
 
 public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 
+    private static final StatusChangeNotifier NO_OP_NOTIFIER = new StatusChangeNotifier() {
+        @Override
+        public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode,
+                final int newStatusCode, final long actorUserId) {
+        }
+
+        @Override
+        public void notifyInvalidStatusTransition(final int issueId, final int oldStatusCode,
+                final int newStatusCode, final long actorUserId) {
+        }
+
+        @Override
+        public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long actorUserId) {
+        }
+    };
+
     private IssueUpdater updater;
+    private StatusChangeNotifier notifier;
+    private RestrictedStatusTransitionPolicy statusTransitionPolicy;
+    private IssueUpdateOrchestrator orchestrator;
 
     BacklogTimeRecorder(final IssueUpdater updater) {
+        this(updater, NO_OP_NOTIFIER);
+    }
+
+    BacklogTimeRecorder(final IssueUpdater updater, final StatusChangeNotifier notifier) {
+        this(updater, notifier, null);
+    }
+
+    BacklogTimeRecorder(final IssueUpdater updater, final StatusChangeNotifier notifier,
+            final RestrictedStatusTransitionPolicy statusTransitionPolicy) {
         this.updater = updater;
+        this.notifier = notifier;
+        this.statusTransitionPolicy = statusTransitionPolicy;
     }
 
     public BacklogTimeRecorder() {
@@ -45,11 +77,48 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
         final boolean hasDateChange = issue.getChanges().stream()
                 .anyMatch(change -> change.getField().equals("startDate") || change.getField().equals("limitDate"));
 
+        final int oldStatus = issue.getChanges().stream()
+                .filter(change -> change.getField().equals("status"))
+                .findFirst()
+                .map(change -> change.getOldValue())
+                .filter(value -> value != null)
+                .map(Integer::parseInt)
+                .orElse(0);
+
         final int newStatus = issue.getChanges().stream()
                 .filter(change -> change.getField().equals("status"))
                 .findFirst()
                 .map(change -> Integer.parseInt(change.getNewValue()))
                 .orElse(0);
+
+        boolean pbiValidationEnabled = false;
+        try {
+            final String issueTypeName = issue.getIssueType() != null ? issue.getIssueType().getName() : null;
+            final String projectKey = payload.getProject() != null ? payload.getProject().getProjectKey() : null;
+            pbiValidationEnabled = getStatusTransitionPolicy().isEnabledProject(projectKey)
+                    && getStatusTransitionPolicy().isPbiIssueType(issueTypeName);
+        } catch (final RuntimeException e) {
+            logger.log("Skipping PBI status validation due to a configuration error: " + e.getMessage(),
+                    LogLevel.ERROR);
+        }
+
+        if (pbiValidationEnabled) {
+            final long actorUserId = payload.getCreatedUser() != null ? payload.getCreatedUser().getId() : 0;
+
+            if (Activity.Type.valueOf(payload.getType()) == Activity.Type.IssueCreated) {
+                final int creationStatus = issue.getStatus() != null ? issue.getStatus().getId() : 0;
+                if (getStatusTransitionPolicy().isInvalidCreationStatus(creationStatus)) {
+                    getNotifier().notifyInvalidCreationStatus(issue.getId(), creationStatus, actorUserId);
+                }
+            } else if (newStatus != 0) {
+                if (getStatusTransitionPolicy().isInvalidOpenTransition(oldStatus, newStatus)) {
+                    getNotifier().notifyInvalidStatusTransition(issue.getId(), oldStatus, newStatus, actorUserId);
+                } else if (getStatusTransitionPolicy().isRestrictedTransition(oldStatus, newStatus)
+                        && !getStatusTransitionPolicy().isAuthorized(actorUserId)) {
+                    getNotifier().notifyUnauthorizedStatusChange(issue.getId(), oldStatus, newStatus, actorUserId);
+                }
+            }
+        }
 
         if (newStatus != 0 && isHandledStatus(newStatus)) {
             final com.nulabinc.backlog4j.Issue updatedIssue = getUpdater().updateIssue(issue.getId(), newStatus, hasDateChange);
@@ -77,13 +146,34 @@ public class BacklogTimeRecorder implements RequestHandler<APIGatewayV2HTTPEvent
 
     private IssueUpdater getUpdater() {
         if (updater == null) {
+            updater = getOrchestrator();
+        }
+        return updater;
+    }
+
+    private StatusChangeNotifier getNotifier() {
+        if (notifier == null) {
+            notifier = getOrchestrator();
+        }
+        return notifier;
+    }
+
+    private IssueUpdateOrchestrator getOrchestrator() {
+        if (orchestrator == null) {
             final String apiKey = System.getenv("BACKLOG_API_KEY");
             if (apiKey == null) {
                 throw new RuntimeException("BACKLOG_API_KEY is not set");
             }
-            updater = new IssueUpdateOrchestrator(apiKey);
+            orchestrator = new IssueUpdateOrchestrator(apiKey);
         }
-        return updater;
+        return orchestrator;
+    }
+
+    private RestrictedStatusTransitionPolicy getStatusTransitionPolicy() {
+        if (statusTransitionPolicy == null) {
+            statusTransitionPolicy = RestrictedStatusTransitionPolicy.fromEnv();
+        }
+        return statusTransitionPolicy;
     }
 
     private APIGatewayV2HTTPResponse returnText(final String text, final int status) {

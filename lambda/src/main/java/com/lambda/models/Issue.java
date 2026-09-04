@@ -10,8 +10,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.nulabinc.backlog4j.Change;
+import com.nulabinc.backlog4j.IssueType;
 import com.nulabinc.backlog4j.Status;
 import com.nulabinc.backlog4j.internal.json.ChangeJSONImpl;
+import com.nulabinc.backlog4j.internal.json.IssueTypeJSONImpl;
 import com.nulabinc.backlog4j.internal.json.StatusJSONImpl;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -22,6 +24,8 @@ public class Issue {
     BigDecimal actualHours;
     @JsonDeserialize(as = StatusJSONImpl.class)
     Status status;
+    @JsonDeserialize(as = IssueTypeJSONImpl.class)
+    IssueType issueType;
     String summary;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     Date startDate;
@@ -45,6 +49,10 @@ public class Issue {
 
     public Status getStatus() {
         return status;
+    }
+
+    public IssueType getIssueType() {
+        return issueType;
     }
 
     public String getSummary() {
