@@ -27,7 +27,7 @@ for the individual update rules.
 | Layer          | Technology                                              |
 | -------------- | -------------------------------------------------------- |
 | Language       | Java 17                                                   |
-| Framework      | AWS CDK 2.114.0 (Java)                                    |
+| Framework      | AWS CDK 2.253.0 (Java)                                    |
 | Backlog client | [backlog4j](https://github.com/nulab/backlog4j) 2.6.0, targeting the `faber-wi` Backlog space |
 | Infrastructure | AWS Lambda (Java 17 runtime, SnapStart, public Function URL, no API Gateway) |
 | Build          | Maven (root CDK app + `lambda/` module, packaged with `maven-shade-plugin`) |
@@ -162,15 +162,6 @@ All project documentation is in the [docs/](docs/) directory:
 - [Overview](docs/overview/) -- project context and goals
 - [Architecture](docs/architecture/) -- system design and diagrams
 - [Guides](docs/guides/) -- how-to guides (currently: [deployment](docs/guides/deployment.md))
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and
-contribution workflow.
-
-## Security
-
-See [SECURITY.md](SECURITY.md) for the security policy and how to report vulnerabilities.
 
 ## Links
 

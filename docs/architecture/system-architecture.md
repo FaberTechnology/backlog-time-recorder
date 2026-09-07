@@ -6,7 +6,7 @@ owner: "@HoangHades"
 domain: ["Architecture"]
 doc_type: "Design-Doc"
 status: "active"
-last-reviewed: 2026-08-11
+last-reviewed: 2026-09-07
 review-cycle: "12-months"
 tags: ["architecture", "system-design", "aws-lambda", "cdk"]
 ---
@@ -19,9 +19,13 @@ Backlog Time Recorder is a single AWS Lambda function, deployed via AWS CDK,
 that reacts to Backlog issue-update webhooks and keeps milestone,
 actual-hours, and "Started at" data in sync on the issue.
 
+It also runs an independent, opt-in check that flags (via a Backlog issue
+comment, never a revert) unwanted status transitions or creation statuses on
+"PBI"-type issues, once configured for a project.
+
 **Architecture Style**: Serverless, event-driven (single-function webhook receiver)
 
-**Last Updated**: 2026-08-11
+**Last Updated**: 2026-09-07
 
 ## System Context
 
@@ -40,6 +44,8 @@ the `faber-wi` space.
 - Recompute and apply monthly milestones when an issue's start/due date changes.
 - Calculate and set actual hours when an issue is closed and none is recorded yet.
 - Stamp/update the "Started at" custom field when an issue moves to Open or In Progress.
+- For "PBI"-type issues in an enabled project, flag (via an issue comment) a status
+  change or creation status that violates the Product-Owner-only transition rules.
 
 **Non-Functional Requirements**:
 
@@ -62,12 +68,15 @@ graph LR
     Backlog["Backlog (faber-wi space)"] -- "issue-update webhook (HTTPS POST)" --> FnURL["Lambda Function URL (auth: NONE)"]
     FnURL --> Handler["BacklogTimeRecorder.handleRequest"]
     Handler --> Orchestrator["IssueUpdateOrchestrator"]
+    Handler --> Policy["RestrictedStatusTransitionPolicy"]
+    Policy -- "violation" --> Notifier["StatusChangeNotifier\n(impl: IssueUpdateOrchestrator)"]
     Orchestrator --> Milestone["MilestoneUpdateStrategy"]
     Orchestrator --> ActualHours["ActualHoursUpdateStrategy"]
     Orchestrator --> StartedAt["StartedAtUpdateStrategy"]
     Milestone --> BacklogAPI["Backlog REST API (via backlog4j)"]
     ActualHours --> BacklogAPI
     StartedAt --> BacklogAPI
+    Notifier --> BacklogAPI
     BacklogAPI --> Backlog
 ```
 
@@ -77,8 +86,10 @@ graph LR
 | --------- | ------- | ---------- |
 | `BacklogTimeRecorderStack` (CDK) | Provisions the Lambda function and its Function URL | AWS CDK (Java) |
 | `BacklogTimeRecorder` (handler) | Entry point invoked per webhook call; decides whether/how to react | Java 17, `aws-lambda-java-core` |
-| `IssueUpdateOrchestrator` | Fetches the issue, runs the update strategies, persists changes | Java 17, backlog4j |
+| `IssueUpdateOrchestrator` | Fetches the issue, runs the update strategies, persists changes; also implements `StatusChangeNotifier` | Java 17, backlog4j |
 | `UpdateStrategy` implementations | One self-contained update rule each (milestone / actual hours / started-at) | Java 17 |
+| `RestrictedStatusTransitionPolicy` | Opt-in PBI status-transition/creation rules, built from env vars | Java 17 (pure logic, no Backlog API) |
+| `StatusChangeNotifier` | Posts a Backlog issue comment for a flagged status violation | Java 17, backlog4j |
 
 ## Core Components
 
@@ -128,6 +139,35 @@ backlog4j's `StatusType` enum.
 - **StartedAtUpdateStrategy** — on Open/In Progress, stamps or updates the
   "Started at" custom field via `TimeTrackingHelper.formatStartedAt`.
 
+### PBI Status Validation
+
+**Purpose**: Flag (never revert) status transitions or creation statuses on
+"PBI"-type issues that bypass Product-Owner-only rules.
+
+**Responsibilities**:
+
+- `RestrictedStatusTransitionPolicy` — built via `fromEnv()` from
+  `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`, and
+  `ENABLED_PROJECT_KEYS` (all optional; the whole feature is disabled unless
+  all three are set for a given project). Decides: is this project/issue
+  type in scope; is a transition to Setting Priority/Closed restricted to
+  Product Owners; is a transition out of Open invalid; is a creation status
+  other than Open invalid.
+- `StatusChangeNotifier` (implemented by `IssueUpdateOrchestrator`) — posts a
+  Backlog issue comment describing the violation and notifying a single
+  hardcoded reviewer user ID (`STATUS_VIOLATION_NOTIFY_USER_ID`).
+- `BacklogTimeRecorder.handleRequest` computes the enablement gate inside a
+  `try/catch (RuntimeException)`, so a malformed env var (e.g. a non-numeric
+  ID) only disables the check for that invocation instead of failing the
+  whole webhook.
+
+**Technology**: Java 17. `RestrictedStatusTransitionPolicy` has no Backlog
+API dependency; `StatusChangeNotifier`'s implementation uses backlog4j's
+`addIssueComment`.
+
+**Key Dependencies**: `Activity.Type` (backlog4j) to distinguish issue
+creation from a status-change webhook.
+
 ## Communication Patterns
 
 ### Synchronous Communication
@@ -154,12 +194,21 @@ sequenceDiagram
     participant Backlog
     participant FnURL as Lambda Function URL
     participant Handler as BacklogTimeRecorder
+    participant Policy as RestrictedStatusTransitionPolicy
+    participant Notifier as StatusChangeNotifier
     participant Orchestrator as IssueUpdateOrchestrator
     participant API as Backlog API (backlog4j)
 
     Backlog->>FnURL: POST issue-update webhook
     FnURL->>Handler: handleRequest(event)
     Handler->>Handler: parse WebhookPayload, detect status/date changes
+    opt PBI issue type in an enabled project
+        Handler->>Policy: isInvalidCreationStatus / isInvalidOpenTransition / isRestrictedTransition+isAuthorized
+        alt violation found
+            Handler->>Notifier: notifyInvalid.../notifyUnauthorized...
+            Notifier->>API: addIssueComment(issueId, violation text)
+        end
+    end
     alt handled status (Open / InProgress / Closed) or date change
         Handler->>Orchestrator: updateIssue(issueId, newStatus, hasDateChange)
         Orchestrator->>API: getIssue(issueId)
@@ -185,6 +234,14 @@ sequenceDiagram
   Lambda's environment by the CDK stack from the `BACKLOG_API_KEY`
   environment variable at deploy time (see
   [Deployment Guide](../guides/deployment.md)).
+- **PBI status validation authorization**: not enforced by Backlog itself —
+  `RestrictedStatusTransitionPolicy.isAuthorized` only checks the webhook's
+  `createdUser` ID against `PRODUCT_OWNER_USER_IDS`, a CSV env var. A
+  violation is flagged with an issue comment, not blocked or reverted, so
+  this is a detective control, not a preventive one. The three env vars
+  (`PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`,
+  `ENABLED_PROJECT_KEYS`) are injected the same way as `BACKLOG_API_KEY`,
+  and the whole check stays disabled until all three are set for a project.
 
 ### Data Security
 
@@ -246,6 +303,7 @@ No ADRs have been recorded yet for this project. See `docs/ADR/` once it exists.
 | Function URL with `authType: NONE` | Simple, no API Gateway to manage | Anyone with the URL can POST to it; no verified caller identity |
 | No caching; re-fetch issue/milestones every call | Always consistent with current Backlog state | Extra Backlog API calls per webhook invocation |
 | Errors from milestone updates are logged, not retried | Keeps the handler simple and fast | Failures during a date-change update are silent to Backlog and only visible in CloudWatch Logs |
+| PBI status violations are flagged via comment, not reverted or blocked | Simple to implement; no risk of the Lambda fighting a legitimate override | A flagged issue stays in its (possibly wrong) status until a human acts on the comment |
 
 ## Future Considerations
 
@@ -256,6 +314,11 @@ No ADRs have been recorded yet for this project. See `docs/ADR/` once it exists.
   (`BacklogTimeRecorderTest`).
 - Milestone-update failures during a date-change event are logged but not
   retried or surfaced anywhere else.
+- `STATUS_VIOLATION_NOTIFY_USER_ID` (the reviewer notified on a PBI status
+  violation) is a single hardcoded Backlog user ID, not configurable via env
+  var.
+- PBI status validation trusts the webhook's `createdUser` field as the
+  actor; it does not re-verify against Backlog's own audit/activity log.
 
 ## References
 
