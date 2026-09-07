@@ -105,4 +105,35 @@ public class IssueDeserializationTest {
         assertEquals("2023-11-16", sdf.format(issue.getStartDate()));
         assertEquals("2023-11-20", sdf.format(issue.getDueDate()));
     }
+
+    @Test
+    public void testDeserializeIssueWithIssueType() {
+        String json = """
+            {
+                "id": 200000001,
+                "summary": "PBI test issue",
+                "issueType": {"id": 12345, "projectId": 100000, "name": "PBI", "color": "#990000"}
+            }
+            """;
+
+        Issue issue = Jackson.fromJsonString(json, Issue.class);
+
+        assertNotNull(issue.getIssueType());
+        assertEquals(12345, issue.getIssueType().getId());
+        assertEquals("PBI", issue.getIssueType().getName());
+    }
+
+    @Test
+    public void testDeserializeIssueWithoutIssueType() {
+        String json = """
+            {
+                "id": 200000001,
+                "summary": "Test issue without type"
+            }
+            """;
+
+        Issue issue = Jackson.fromJsonString(json, Issue.class);
+
+        assertNull(issue.getIssueType());
+    }
 }
