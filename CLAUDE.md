@@ -101,6 +101,32 @@ Request flow: `BacklogTimeRecorder` (the Lambda `RequestHandler`) → `IssueUpda
 Status codes referenced throughout (`Issue.StatusType` from `backlog4j`): the handler only reacts to Open,
 InProgress, and Closed — other custom workflow statuses are ignored.
 
+## PBI status validation (opt-in, separate from the update strategies)
+
+Independently of the milestone/actual-hours/started-at strategies above, `BacklogTimeRecorder.handleRequest`
+also runs an opt-in check that flags (but never reverts) unwanted status transitions on "PBI"-type issues:
+
+- **`models/RestrictedStatusTransitionPolicy`** — pure policy logic built from three env vars via
+  `fromEnv()`: `PRODUCT_OWNER_USER_IDS` (CSV of Backlog user IDs), `SETTING_PRIORITY_STATUS_IDS` (CSV of
+  numeric status IDs — the "Setting Priority" status has a different ID per project), and
+  `ENABLED_PROJECT_KEYS` (CSV of project keys the check applies to). All three are optional; each rule is
+  disabled when its inputs are empty. It exposes `isEnabledProject`/`isPbiIssueType` (gating), plus three
+  checks: `isRestrictedTransition` + `isAuthorized` (Open→Setting Priority or any→Closed requires an actor
+  in `PRODUCT_OWNER_USER_IDS`), `isInvalidOpenTransition` (from Open, a PBI may only move to Setting
+  Priority or Closed, regardless of actor), and `isInvalidCreationStatus` (a PBI must be created as Open).
+- **`handlers/StatusChangeNotifier`** (interface) / **`IssueUpdateOrchestrator`** (also implements it) —
+  `notifyUnauthorizedStatusChange`/`notifyInvalidStatusTransition`/`notifyInvalidCreationStatus` each post a
+  Backlog issue comment (via `postViolationComment`, notifying the hardcoded
+  `STATUS_VIOLATION_NOTIFY_USER_ID`) describing the violation. Nothing is ever reverted automatically.
+- In `BacklogTimeRecorder.handleRequest`, this check only runs when `issue.getIssueType().getName()` is
+  exactly `"PBI"` **and** `payload.getProject().getProjectKey()` is in `ENABLED_PROJECT_KEYS` — computing
+  that gate is wrapped in a `try/catch (RuntimeException)` so a malformed env var (e.g. a non-numeric ID)
+  logs an `ERROR` and disables the check for that invocation instead of crashing the whole Lambda. Issue
+  creation (`Activity.Type.IssueCreated`) is checked against `isInvalidCreationStatus`; any other status
+  change is checked against `isInvalidOpenTransition` first, then `isRestrictedTransition` +
+  `!isAuthorized`. This validation is entirely separate from the `newStatus`/`hasDateChange` branch below it
+  — it runs (or not) regardless of whether the update strategies also fire for the same webhook.
+
 ## Gotchas
 
 - The Lambda Function URL has `FunctionUrlAuthType.NONE` — it's publicly reachable over HTTPS with no
@@ -114,6 +140,13 @@ InProgress, and Closed — other custom workflow statuses are ignored.
 - `BACKLOG_API_KEY` is required to deploy (and to build/run the Lambda for real), but **not** to run
   `mvn test` — the test suite invokes `BacklogTimeRecorder` via its package-private constructor with a
   no-op `IssueUpdater` fake, so no real API key or network call is involved.
+- The PBI status-transition check is off by default: it only activates once `PRODUCT_OWNER_USER_IDS`,
+  `SETTING_PRIORITY_STATUS_IDS`, and `ENABLED_PROJECT_KEYS` are all set and the issue's Backlog issue type
+  is named exactly `"PBI"` — a project not listed in `ENABLED_PROJECT_KEYS`, or any other issue type, is
+  silently unaffected. See [.github/workflows/deploy.yml](.github/workflows/deploy.yml) for how those three
+  values are injected as secrets at deploy time.
+- `STATUS_VIOLATION_NOTIFY_USER_ID` in `IssueUpdateOrchestrator` is a single hardcoded Backlog user ID
+  (with a name comment), not configurable via env var — every flagged violation notifies that one user.
 
 ## Testing conventions
 
@@ -125,3 +158,8 @@ InProgress, and Closed — other custom workflow statuses are ignored.
 - Strategy and helper tests (`MilestoneUpdateStrategyTest`, `ActualHoursUpdateStrategyTest`,
   `WorkScheduleHelperTest`, `MilestoneHelperTest`) test each unit independently with fakes/mocks rather than
   hitting the real Backlog API.
+- `RestrictedStatusTransitionPolicyTest` covers the PBI status-validation policy logic in isolation (no
+  Lambda/Backlog involved). `StatusChangeNotificationTest` drives `BacklogTimeRecorder.handleRequest` with
+  a fake `StatusChangeNotifier` to assert which violations get reported for a given webhook payload.
+  `IssueUpdateOrchestratorDescribeStatusTest` covers `IssueUpdateOrchestrator.describeStatus`'s formatting
+  of status codes (including the `Custom` status fallback) used in violation comment text.
