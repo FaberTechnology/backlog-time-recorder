@@ -72,28 +72,28 @@ public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifi
 
     @Override
     public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode, final int newStatusCode,
-            final long actorUserId) {
+            final long unusedActorUserId) {
         postViolationComment(issueId, String.format(
-                "Status changed from %s to %s by user #%d without Product Owner permission. "
+                "Status changed from %s to %s by a user without Product Owner permission. "
                         + "This change was not reverted automatically — please review.",
-                describeStatus(oldStatusCode), describeStatus(newStatusCode), actorUserId));
+                describeStatus(oldStatusCode), describeStatus(newStatusCode)));
     }
 
     @Override
     public void notifyInvalidStatusTransition(final int issueId, final int oldStatusCode, final int newStatusCode,
-            final long actorUserId) {
+            final long unusedActorUserId) {
         postViolationComment(issueId, String.format(
-                "Status changed from %s to %s by user #%d, but Open may only move to Setting Priority or Closed. "
+                "Status changed from %s to %s by a user, but Open may only move to Setting Priority or Closed. "
                         + "This change was not reverted automatically — please review.",
-                describeStatus(oldStatusCode), describeStatus(newStatusCode), actorUserId));
+                describeStatus(oldStatusCode), describeStatus(newStatusCode)));
     }
 
     @Override
-    public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long actorUserId) {
+    public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long unusedActorUserId) {
         postViolationComment(issueId, String.format(
-                "PBI created with status %s by user #%d, but PBIs must be created with status Open. "
+                "PBI created as %s by a user, but PBIs must be created with status Open. "
                         + "This was not reverted automatically — please review.",
-                describeStatus(statusCode), actorUserId));
+                describeStatus(statusCode)));
     }
 
     private void postViolationComment(final int issueId, final String content) {
@@ -101,8 +101,8 @@ public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifi
                 .notifiedUserIds(Collections.singletonList(STATUS_VIOLATION_NOTIFY_USER_ID)));
     }
 
-    private static String describeStatus(final int statusCode) {
+    static String describeStatus(final int statusCode) {
         final StatusType statusType = StatusType.valueOf(statusCode);
-        return statusType == StatusType.Custom ? "status #" + statusCode : statusType.name();
+        return statusType == StatusType.Custom ? "a custom status" : statusType.name();
     }
 }
