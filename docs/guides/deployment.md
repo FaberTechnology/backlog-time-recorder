@@ -6,7 +6,7 @@ owner: "@HoangHades"
 domain: ["SRE-Operations", "Process-SDLC"]
 doc_type: "How-to-Guide"
 status: "active"
-last-reviewed: 2026-08-11
+last-reviewed: 2026-09-07
 review-cycle: "3-months"
 tags: ["deployment", "CI/CD", "aws", "lambda", "cdk"]
 ---
@@ -26,6 +26,10 @@ Actions.
       the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` repository secrets
       used by [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)
 - [ ] `BACKLOG_API_KEY` stored as a repository secret
+- [ ] Optionally, `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`, and
+      `ENABLED_PROJECT_KEYS` stored as repository secrets to enable PBI status
+      validation (see the root [README's Configuration section](../../README.md#configuration));
+      leaving any of them unset keeps that check disabled
 - [ ] Code merged to `master` (or, for a manual local deploy, the CDK CLI
       and AWS credentials on your machine)
 
@@ -53,9 +57,11 @@ on `push` to `master`:
    `AWS_SECRET_ACCESS_KEY` secrets, region `ap-northeast-1`
 5. Install the AWS CDK CLI (`npm install -g aws-cdk`)
 6. Build the Lambda module: `mvn -B clean package` (in `lambda/`), with
-   `BACKLOG_API_KEY` in the environment
-7. Deploy: `cdk deploy --require-approval never`, with `BACKLOG_API_KEY` in
-   the environment
+   `BACKLOG_API_KEY`, `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`,
+   and `ENABLED_PROJECT_KEYS` in the environment
+7. Deploy: `cdk deploy --require-approval never`, with the same four
+   variables in the environment (the CDK stack only forwards the latter
+   three into the Lambda's environment if they're actually set)
 
 ```mermaid
 graph LR
@@ -74,6 +80,10 @@ To deploy from your own machine:
 
 ```bash
 export BACKLOG_API_KEY=your-backlog-api-key
+# Optional: enable PBI status validation
+export PRODUCT_OWNER_USER_IDS=123,456
+export SETTING_PRIORITY_STATUS_IDS=7,8
+export ENABLED_PROJECT_KEYS=PROJ1,PROJ2
 cd lambda && mvn -B clean package && cd ..
 cdk deploy --require-approval never
 ```
