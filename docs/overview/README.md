@@ -6,7 +6,7 @@ owner: "@HoangHades"
 domain: ["Engineering-App"]
 doc_type: "Overview-Handbook"
 status: "active"
-last-reviewed: 2026-08-11
+last-reviewed: 2026-09-07
 review-cycle: "6-months"
 tags: ["project-overview", "backlog", "aws-lambda"]
 ---
@@ -27,7 +27,9 @@ space, updating the issue back through the Backlog API.
 Without this service, monthly milestones, actual hours, and a "Started at"
 custom field on a Backlog issue all have to be maintained by hand whenever an
 issue's dates or status change — easy to forget and inconsistent across
-issues.
+issues. Separately, nothing stops any user from moving a PBI issue through
+status transitions reserved for the Product Owner, or creating one in the
+wrong starting status.
 
 ### Goals and Objectives
 
@@ -37,6 +39,9 @@ issues.
   when an issue is closed.
 - **Started-at tracking**: automatically stamp a "Started at" custom field
   when work begins on an issue.
+- **PBI status governance**: flag (via an issue comment, without reverting)
+  PBI status changes or creations that violate the Product-Owner-only
+  transition rules, once enabled for a project.
 
 ### Success Metrics
 
@@ -68,6 +73,13 @@ measure impact.
 3. **Started-at stamping**: on Open/In Progress, stamps or updates the
    "Started at" custom field
    ([`StartedAtUpdateStrategy`](../../lambda/src/main/java/com/lambda/strategies/StartedAtUpdateStrategy.java)).
+4. **PBI status validation** (opt-in per project): once `PRODUCT_OWNER_USER_IDS`,
+   `SETTING_PRIORITY_STATUS_IDS`, and `ENABLED_PROJECT_KEYS` are configured,
+   flags Open→Setting Priority/Closed transitions by non-Product-Owner users,
+   invalid transitions out of Open, and PBIs created in a status other than
+   Open — each as a Backlog issue comment, never a revert
+   ([`RestrictedStatusTransitionPolicy`](../../lambda/src/main/java/com/lambda/models/RestrictedStatusTransitionPolicy.java),
+   [`StatusChangeNotifier`](../../lambda/src/main/java/com/lambda/handlers/StatusChangeNotifier.java)).
 
 ## System Context
 
@@ -82,13 +94,17 @@ measure impact.
   required both to deploy and to run.
 - **AWS Lambda Function URL**: the public HTTPS endpoint Backlog's webhook
   posts to (no API Gateway in front of it).
+- **PBI status validation env vars** (`PRODUCT_OWNER_USER_IDS`,
+  `SETTING_PRIORITY_STATUS_IDS`, `ENABLED_PROJECT_KEYS`): all optional; the
+  status-validation feature stays fully disabled until they're set. See
+  [System Architecture — Security Architecture](../architecture/system-architecture.md#security-architecture).
 
 ## Technology Stack
 
 | Layer          | Technology                                       |
 | -------------- | ------------------------------------------------- |
 | Language       | Java 17                                            |
-| Framework      | AWS CDK 2.114.0 (Java)                             |
+| Framework      | AWS CDK 2.253.0 (Java)                             |
 | Backlog client | backlog4j 2.6.0                                    |
 | Infrastructure | AWS Lambda (Function URL, SnapStart), no database  |
 
@@ -103,7 +119,7 @@ webhook call.
 
 **Version**: `0.1` (per [pom.xml](../../pom.xml))
 
-**Last Updated**: 2026-07-24 (most recent commit at the time this doc was written)
+**Last Updated**: 2026-09-07 (most recent commit at the time this doc was updated)
 
 ### Roadmap
 
@@ -137,7 +153,7 @@ For developers joining this project:
 
 The Lambda throws a `RuntimeException("BACKLOG_API_KEY is not set")` the
 first time it needs to call the Backlog API (see
-[`BacklogTimeRecorder.getUpdater()`](../../lambda/src/main/java/com/lambda/handlers/BacklogTimeRecorder.java)).
+[`BacklogTimeRecorder.getOrchestrator()`](../../lambda/src/main/java/com/lambda/handlers/BacklogTimeRecorder.java)).
 
 ### Which issue statuses actually trigger an update?
 
@@ -146,11 +162,29 @@ Open, In Progress, and Closed
 Any other status change is ignored unless the issue's start/due date also
 changed, in which case milestones are still recalculated.
 
+### Does the PBI status check ever revert a change?
+
+No. It only posts a Backlog issue comment describing the violation and
+notifying a fixed reviewer user ID — a human has to review and fix the
+issue manually
+([`IssueUpdateOrchestrator.postViolationComment()`](../../lambda/src/main/java/com/lambda/handlers/IssueUpdateOrchestrator.java)).
+
+### How do I enable the PBI status check for a project?
+
+Set all three of `PRODUCT_OWNER_USER_IDS`, `SETTING_PRIORITY_STATUS_IDS`, and
+`ENABLED_PROJECT_KEYS`, and add the project's key to
+`ENABLED_PROJECT_KEYS`. It only ever applies to issues whose Backlog issue
+type is named exactly `PBI`. See the root
+[README's Configuration section](../../README.md#configuration).
+
 ## Glossary
 
 | Term | Definition |
 | ---- | ---------- |
 | Webhook | The HTTP callback Backlog sends to the Lambda Function URL whenever a subscribed issue event occurs. |
+| PBI | Product Backlog Item — the Backlog issue type name the status-validation feature targets. |
+| Product Owner | A user listed in `PRODUCT_OWNER_USER_IDS`, authorized to move a PBI to Setting Priority or Closed. |
+| Setting Priority | A per-project custom status; its numeric ID must be listed in `SETTING_PRIORITY_STATUS_IDS` (each Backlog project can assign it a different ID). |
 | Actual hours | A Backlog issue field recording how many hours were actually spent on the issue. |
 | Milestone | A Backlog project-level date range (here, generated monthly) that issues can be assigned to. |
 | "Started at" custom field | A text custom field on Backlog issues that this service stamps when work begins. |
