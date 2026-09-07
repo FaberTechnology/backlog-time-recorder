@@ -72,7 +72,7 @@ public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifi
 
     @Override
     public void notifyUnauthorizedStatusChange(final int issueId, final int oldStatusCode, final int newStatusCode,
-            final long actorUserId) {
+            final long unusedActorUserId) {
         postViolationComment(issueId, String.format(
                 "Status changed from %s to %s by a user without Product Owner permission. "
                         + "This change was not reverted automatically — please review.",
@@ -81,7 +81,7 @@ public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifi
 
     @Override
     public void notifyInvalidStatusTransition(final int issueId, final int oldStatusCode, final int newStatusCode,
-            final long actorUserId) {
+            final long unusedActorUserId) {
         postViolationComment(issueId, String.format(
                 "Status changed from %s to %s by a user, but Open may only move to Setting Priority or Closed. "
                         + "This change was not reverted automatically — please review.",
@@ -89,9 +89,9 @@ public class IssueUpdateOrchestrator implements IssueUpdater, StatusChangeNotifi
     }
 
     @Override
-    public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long actorUserId) {
+    public void notifyInvalidCreationStatus(final int issueId, final int statusCode, final long unusedActorUserId) {
         postViolationComment(issueId, String.format(
-                "PBI created with status %s by a user, but PBIs must be created with status Open. "
+                "PBI created as %s by a user, but PBIs must be created with status Open. "
                         + "This was not reverted automatically — please review.",
                 describeStatus(statusCode)));
     }
