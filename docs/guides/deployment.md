@@ -51,7 +51,8 @@ Deployment is fully automated by
 on `push` to `master`:
 
 1. Check out the repository
-2. Set up Node.js (`lts/*`) — needed to install the CDK CLI
+2. Set up Node.js (version pinned in [`.nvmrc`](../../.nvmrc), currently
+   `24.22.1`) — needed to install the CDK CLI
 3. Set up JDK 17 (Microsoft distribution, with Maven caching)
 4. Configure AWS credentials from the `AWS_ACCESS_KEY_ID` /
    `AWS_SECRET_ACCESS_KEY` secrets, region `ap-northeast-1`
